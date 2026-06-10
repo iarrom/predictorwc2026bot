@@ -1,3 +1,4 @@
+import { LeaderboardLiveRefresh } from "@/features/leaderboard/ui/LeaderboardLiveRefresh";
 import { getInitials } from "@/features/matches/lib/voterInfo";
 import { canSeePlayerNames } from "@/shared/lib/auth";
 import { LEADERBOARD_EXCLUDED_TELEGRAM_IDS } from "@/shared/lib/leaderboard";
@@ -69,6 +70,7 @@ export default async function LeaderboardPage() {
     }));
 
   return (
+    <LeaderboardLiveRefresh>
     <div className="flex flex-col animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
       <div className="sports-panel corner-squircle sports-panel-max-h flex flex-col">
         <div className="shrink-0 border-b border-white/[0.08] px-4 py-3">
@@ -154,5 +156,6 @@ export default async function LeaderboardPage() {
         </div>
       </div>
     </div>
+    </LeaderboardLiveRefresh>
   );
 }

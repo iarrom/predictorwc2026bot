@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useLiveRefresh } from "@/shared/lib/supabase/useLiveRefresh";
 import type { TiebreakerRoundState } from "@/entities/tiebreaker/model/types";
 import { formatTiebreakerDeadline } from "@/features/tiebreakers/lib/formatDeadline";
 import { formatTiebreakerMatchCount } from "@/features/tiebreakers/lib/formatMatchCount";
@@ -41,7 +43,10 @@ function RoundStatus({
 }
 
 export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
+  const router = useRouter();
   const [activeRoundKey, setActiveRoundKey] = useState<string | null>(null);
+
+  useLiveRefresh("tiebreaker-live", "tiebreakers");
 
   const activeRound =
     rounds.find((round) => round.roundKey === activeRoundKey) ?? null;
@@ -105,6 +110,10 @@ export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
         round={activeRound}
         canEdit={canEdit}
         onClose={() => setActiveRoundKey(null)}
+        onSaved={() => {
+          router.refresh();
+          setActiveRoundKey(null);
+        }}
       />
     </>
   );

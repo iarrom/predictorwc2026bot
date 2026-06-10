@@ -16,12 +16,14 @@ interface TiebreakerDrawerProps {
   round: TiebreakerRoundState | null;
   canEdit: boolean;
   onClose: () => void;
+  onSaved?: () => void;
 }
 
 export function TiebreakerDrawer({
   round,
   canEdit,
   onClose,
+  onSaved,
 }: TiebreakerDrawerProps) {
   const open = Boolean(round);
 
@@ -59,7 +61,7 @@ export function TiebreakerDrawer({
               key={round.roundKey}
               round={round}
               canEdit={canEdit}
-              onSaved={onClose}
+              onSaved={onSaved ?? onClose}
             />
           </div>
         )}

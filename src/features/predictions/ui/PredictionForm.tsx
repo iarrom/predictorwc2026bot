@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { savePrediction } from "@/features/predictions/actions";
@@ -59,6 +60,7 @@ export function PredictionForm({
   locked,
   canPredict,
 }: PredictionFormProps) {
+  const router = useRouter();
   const [mode, setMode] = useState<"readonly" | "edit">(
     initial ? "readonly" : "edit",
   );
@@ -70,6 +72,7 @@ export function PredictionForm({
       const result = await savePrediction(prev, formData);
       if (result.success) {
         setMode("readonly");
+        router.refresh();
       }
       return result;
     },

@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 import { buildGroupStandings } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
@@ -9,7 +8,7 @@ import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
-import { createClient } from "@/shared/lib/supabase/client";
+import { useLiveRefresh } from "@/shared/lib/supabase/useLiveRefresh";
 import { GroupStandingsList } from "@/features/matches/ui/GroupStandingsList";
 import { MatchDrawer } from "@/features/matches/ui/MatchDrawer";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
@@ -207,34 +206,9 @@ export function MatchesView({
   canPredict,
   canSeePlayerNames,
 }: MatchesViewProps) {
-  const router = useRouter();
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel("matches-live")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "matches" },
-        () => router.refresh(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "predictions" },
-        () => router.refresh(),
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "match_events" },
-        () => router.refresh(),
-      )
-      .subscribe();
-
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [router]);
+  useLiveRefresh("matches-live", "matches", "predictions", "match_events");
 
   const [activeTab, setActiveTab] = useState<MatchDayBucket>(() =>
     getDefaultTab(matches),
