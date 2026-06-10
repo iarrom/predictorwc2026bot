@@ -6,6 +6,7 @@ import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
+import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import {
   toPredictionFormInitial,
   type PredictionDetail,
@@ -125,26 +126,6 @@ function MatchDetailCenterFocus({
       </p>
     </div>
   );
-}
-
-function formatMatchSubtitle(
-  match: Match,
-  t: ReturnType<typeof useTranslations<"matches">>,
-): string {
-  if (match.round_key.startsWith("group_")) {
-    return match.match_number != null
-      ? t("groupStageMatch", { number: match.match_number })
-      : t("groupStage");
-  }
-
-  if (match.match_number != null) {
-    return t("roundMatch", {
-      round: match.round_display,
-      number: match.match_number,
-    });
-  }
-
-  return match.round_display;
 }
 
 function LockedPredictionSummary({

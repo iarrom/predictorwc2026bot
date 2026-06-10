@@ -7,12 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getNextMatchPending } from "@/features/admin/lib/pendingPicks";
+import { AdminTabs } from "@/features/admin/ui/AdminTabs";
+import { MemberRoleControls } from "@/features/admin/ui/MemberRoleControls";
+import { PendingPicksCard } from "@/features/admin/ui/PendingPicksCard";
+import { toIntlLocale } from "@/i18n/config";
 import { getCurrentUserId, isAdmin } from "@/shared/lib/auth";
 import { createClient } from "@/shared/lib/supabase/server";
-import type { UserRole } from "@/shared/types/database";
-import { toIntlLocale } from "@/i18n/config";
-import type { Locale } from "@/shared/types/database";
-import { MemberRoleControls } from "@/features/admin/ui/MemberRoleControls";
+import type { Locale, UserRole } from "@/shared/types/database";
 
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/matches");
@@ -21,14 +23,18 @@ export default async function AdminPage() {
   const locale = (await getLocale()) as Locale;
   const currentUserId = await getCurrentUserId();
   const supabase = await createClient();
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, display_name, role, created_at")
-    .order("created_at", { ascending: false });
+
+  const [{ data: profiles }, picksData] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, display_name, role, created_at")
+      .order("created_at", { ascending: false }),
+    getNextMatchPending(),
+  ]);
 
   const allUsers = profiles ?? [];
-  const guests = allUsers.filter((p) => p.role === "guest");
-  const members = allUsers.filter((p) => p.role !== "guest");
+  const guests = allUsers.filter((profile) => profile.role === "guest");
+  const members = allUsers.filter((profile) => profile.role !== "guest");
 
   const dateFormatter = new Intl.DateTimeFormat(toIntlLocale(locale), {
     day: "2-digit",
@@ -37,15 +43,16 @@ export default async function AdminPage() {
     minute: "2-digit",
   });
 
-  return (
-    <div className="flex flex-col gap-4 animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
-      <div>
-        <h1 className="text-xl font-bold">{t("title")}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("description")}
-        </p>
-      </div>
+  const picksSlot = (
+    <PendingPicksCard
+      nextMatch={picksData.nextMatch}
+      pending={picksData.pending}
+      locale={locale}
+    />
+  );
 
+  const usersSlot = (
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
           <CardTitle>{t("pendingApproval")}</CardTitle>
@@ -117,8 +124,10 @@ export default async function AdminPage() {
           <CardDescription>
             {t("allUsersSummary", {
               total: allUsers.length,
-              admins: members.filter((m) => m.role === "admin").length,
-              participants: members.filter((m) => m.role === "participant").length,
+              admins: members.filter((member) => member.role === "admin").length,
+              participants: members.filter(
+                (member) => member.role === "participant",
+              ).length,
               guests: guests.length,
             })}
           </CardDescription>
@@ -178,6 +187,19 @@ export default async function AdminPage() {
           </p>
         </CardContent>
       </Card>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col gap-4 animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
+      <div>
+        <h1 className="text-xl font-bold">{t("title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("description")}
+        </p>
+      </div>
+
+      <AdminTabs picksSlot={picksSlot} usersSlot={usersSlot} />
     </div>
   );
 }

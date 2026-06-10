@@ -71,6 +71,7 @@
     "liveMinute": "Live {minute}",
     "groupStage": "Group Stage",
     "groupStageMatch": "Group Stage · Match {number}",
+    "groupStageMatchday": "Group Stage · Matchday {number}",
     "roundMatch": "{round} · Match {number}",
     "standings": "Standings",
     "lineups": "Line-ups",
@@ -205,6 +206,38 @@
       "guest": "Guest",
       "participant": "Participant",
       "admin": "Admin"
+    },
+    "tabs": {
+      "picks": "Picks",
+      "users": "Users"
+    },
+    "picks": {
+      "title": "Next match picks",
+      "description": "See who hasn't submitted a pick for the nearest upcoming match.",
+      "noUpcoming": "No upcoming matches.",
+      "nextMatch": "Next match",
+      "pendingTitle": "No pick yet ({count})",
+      "allDone": "Everyone has submitted a pick."
+    },
+    "ping": {
+      "title": "⚽️ Prediction reminder",
+      "intro": "You haven't predicted this upcoming match:",
+      "footer": "Kickoff time is shown in your local time. Predictions close at kickoff!",
+      "button": "⚡️ Make predictions",
+      "todayAt": "today at {time}",
+      "at": "{date} at {time}",
+      "ping": "Ping",
+      "sending": "Sending…",
+      "sent": "Sent",
+      "pingAll": "Ping all ({count})",
+      "sendingAll": "Sending to all…",
+      "pingAllResult": "Sent: {sent}, failed: {failed}",
+      "userNotFound": "User not found",
+      "notParticipant": "User is not a participant",
+      "noTelegram": "User has no Telegram ID",
+      "alreadyPredicted": "User already submitted a pick",
+      "sendFailed": "Failed to send Telegram message",
+      "noPending": "No participants without a pick"
     }
   }
 }

@@ -71,6 +71,7 @@
     "liveMinute": "Live {minute}",
     "groupStage": "Групповой этап",
     "groupStageMatch": "Групповой этап · Матч {number}",
+    "groupStageMatchday": "Групповой этап · Тур {number}",
     "roundMatch": "{round} · Матч {number}",
     "standings": "Таблица",
     "lineups": "Составы",
@@ -205,6 +206,38 @@
       "guest": "Гость",
       "participant": "Участник",
       "admin": "Админ"
+    },
+    "tabs": {
+      "picks": "Пики",
+      "users": "Пользователи"
+    },
+    "picks": {
+      "title": "Пики на ближайший матч",
+      "description": "Кто ещё не сделал пик на следующую игру.",
+      "noUpcoming": "Нет предстоящих матчей.",
+      "nextMatch": "Следующий матч",
+      "pendingTitle": "Без пика ({count})",
+      "allDone": "Все уже сделали пик."
+    },
+    "ping": {
+      "title": "⚽️ Напоминание о прогнозе",
+      "intro": "Вы ещё не сделали прогноз на этот матч:",
+      "footer": "Время указано в вашем часовом поясе. Прогнозы закрываются с началом матча!",
+      "button": "⚡️ Сделать прогноз",
+      "todayAt": "сегодня в {time}",
+      "at": "{date} в {time}",
+      "ping": "Пинг",
+      "sending": "Отправка…",
+      "sent": "Отправлено",
+      "pingAll": "Отправить всем ({count})",
+      "sendingAll": "Отправка всем…",
+      "pingAllResult": "Отправлено: {sent}, ошибок: {failed}",
+      "userNotFound": "Пользователь не найден",
+      "notParticipant": "Пользователь не является участником",
+      "noTelegram": "У пользователя нет Telegram ID",
+      "alreadyPredicted": "Пользователь уже сделал пик",
+      "sendFailed": "Не удалось отправить сообщение в Telegram",
+      "noPending": "Нет участников без пика"
     }
   }
 }

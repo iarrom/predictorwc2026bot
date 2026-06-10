@@ -6,6 +6,7 @@ import { buildGroupStandings } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
+import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
@@ -189,26 +190,6 @@ function MatchCenterFocus({
   );
 }
 
-function formatMatchSubtitle(
-  match: Match,
-  t: ReturnType<typeof useTranslations<"matches">>,
-): string {
-  if (match.round_key.startsWith("group_")) {
-    return match.match_number != null
-      ? t("groupStageMatch", { number: match.match_number })
-      : t("groupStage");
-  }
-
-  if (match.match_number != null) {
-    return t("roundMatch", {
-      round: match.round_display,
-      number: match.match_number,
-    });
-  }
-
-  return match.round_display;
-}
-
 export function MatchesView({
   matches,
   voterMap,
@@ -374,7 +355,7 @@ export function MatchesView({
                     setCollapsed((prev) => toggleCollapsed(prev, dateKey))
                   }
                   className={cn(
-                    "flex w-full items-center justify-center gap-0.5 border-t border-white/[0.08] px-3 py-2.5 text-[13px] font-semibold text-foreground transition-colors hover:bg-white/[0.03]",
+                    "flex w-full items-center justify-center gap-0.5 border-t border-white/[0.08] bg-white/[0.05] px-3 py-2.5 text-[13px] font-bold text-foreground transition-colors hover:bg-white/[0.08]",
                     groupIndex === 0 && "border-t-0",
                   )}
                   aria-expanded={!isCollapsed}

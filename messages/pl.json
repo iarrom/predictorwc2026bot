@@ -71,6 +71,7 @@
     "liveMinute": "Live {minute}",
     "groupStage": "Faza grupowa",
     "groupStageMatch": "Faza grupowa · Mecz {number}",
+    "groupStageMatchday": "Faza grupowa · Kolejka {number}",
     "roundMatch": "{round} · Mecz {number}",
     "standings": "Tabela",
     "lineups": "Składy",
@@ -205,6 +206,38 @@
       "guest": "Gość",
       "participant": "Uczestnik",
       "admin": "Admin"
+    },
+    "tabs": {
+      "picks": "Typy",
+      "users": "Użytkownicy"
+    },
+    "picks": {
+      "title": "Typy na najbliższy mecz",
+      "description": "Kto jeszcze nie obstawił najbliższego meczu.",
+      "noUpcoming": "Brak nadchodzących meczów.",
+      "nextMatch": "Następny mecz",
+      "pendingTitle": "Bez typu ({count})",
+      "allDone": "Wszyscy już obstawili."
+    },
+    "ping": {
+      "title": "⚽️ Przypomnienie o typie",
+      "intro": "Nie obstawiłeś tego nadchodzącego meczu:",
+      "footer": "Godzina podana w Twojej strefie czasowej. Typy zamykają się wraz z rozpoczęciem meczu!",
+      "button": "⚡️ Obstaw mecze",
+      "todayAt": "dziś o {time}",
+      "at": "{date} o {time}",
+      "ping": "Ping",
+      "sending": "Wysyłanie…",
+      "sent": "Wysłano",
+      "pingAll": "Wyślij wszystkim ({count})",
+      "sendingAll": "Wysyłanie do wszystkich…",
+      "pingAllResult": "Wysłano: {sent}, błędów: {failed}",
+      "userNotFound": "Nie znaleziono użytkownika",
+      "notParticipant": "Użytkownik nie jest uczestnikiem",
+      "noTelegram": "Brak Telegram ID użytkownika",
+      "alreadyPredicted": "Użytkownik już obstawił",
+      "sendFailed": "Nie udało się wysłać wiadomości Telegram",
+      "noPending": "Brak uczestników bez typu"
     }
   }
 }

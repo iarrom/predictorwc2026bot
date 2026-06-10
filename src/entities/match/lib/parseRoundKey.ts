@@ -1,3 +1,11 @@
+export function getGroupMatchdayFromRoundKey(roundKey: string): number | null {
+  const match = roundKey.match(/^group_(\d+)$/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  return day >= 1 && day <= 3 ? day : null;
+}
+
 export function parseRoundKey(round: string): string {
   const matchday = round.match(/^Matchday (\d+)$/i);
   if (matchday) {
