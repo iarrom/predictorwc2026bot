@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type { TeamLineup } from "@/entities/match/model/types";
 
 interface MatchLineupsProps {
@@ -10,9 +13,11 @@ interface MatchLineupsProps {
 function LineupColumn({
   teamName,
   lineup,
+  t,
 }: {
   teamName: string;
   lineup: TeamLineup;
+  t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -24,14 +29,16 @@ function LineupColumn({
           <p className="text-[10px] text-white/50">{lineup.formation}</p>
         )}
         {lineup.coach && (
-          <p className="text-[10px] text-white/45">Coach: {lineup.coach}</p>
+          <p className="text-[10px] text-white/45">
+            {t("coach", { name: lineup.coach })}
+          </p>
         )}
       </div>
 
       {lineup.lineup.length > 0 && (
         <div>
           <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-white/45">
-            Starting XI
+            {t("startingXi")}
           </p>
           <ul className="flex flex-col gap-0.5">
             {lineup.lineup.map((player) => (
@@ -54,7 +61,7 @@ function LineupColumn({
       {lineup.bench.length > 0 && (
         <div>
           <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-white/45">
-            Bench
+            {t("bench")}
           </p>
           <ul className="flex flex-col gap-0.5">
             {lineup.bench.map((player) => (
@@ -83,27 +90,29 @@ export function MatchLineups({
   homeLineup,
   awayLineup,
 }: MatchLineupsProps) {
+  const t = useTranslations("matches");
+
   if (!homeLineup && !awayLineup) {
     return (
-      <p className="text-xs text-white/50">Lineups not available yet.</p>
+      <p className="text-xs text-white/50">{t("lineupsUnavailable")}</p>
     );
   }
 
   return (
     <div className="flex gap-4">
       {homeLineup ? (
-        <LineupColumn teamName={homeTeamName} lineup={homeLineup} />
+        <LineupColumn teamName={homeTeamName} lineup={homeLineup} t={t} />
       ) : (
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-white/50">{homeTeamName}: TBD</p>
+          <p className="text-xs text-white/50">{t("tbd", { team: homeTeamName })}</p>
         </div>
       )}
 
       {awayLineup ? (
-        <LineupColumn teamName={awayTeamName} lineup={awayLineup} />
+        <LineupColumn teamName={awayTeamName} lineup={awayLineup} t={t} />
       ) : (
         <div className="min-w-0 flex-1 text-right">
-          <p className="text-xs text-white/50">{awayTeamName}: TBD</p>
+          <p className="text-xs text-white/50">{t("tbd", { team: awayTeamName })}</p>
         </div>
       )}
     </div>

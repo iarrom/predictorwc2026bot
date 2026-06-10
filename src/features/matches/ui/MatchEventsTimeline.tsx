@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { MatchEvent } from "@/entities/match/model/types";
 import {
   formatEventMinute,
@@ -55,9 +59,25 @@ export function MatchEventsTimeline({
   homeTeamName,
   awayTeamName,
 }: MatchEventsTimelineProps) {
+  const t = useTranslations("matches");
+  const tEvents = useTranslations("match.events");
+
+  const eventLabels = useMemo(
+    () => ({
+      goal: tEvents("goal"),
+      penalty: tEvents("penalty"),
+      own_goal: tEvents("own_goal"),
+      yellow_card: tEvents("yellow_card"),
+      red_card: tEvents("red_card"),
+      yellow_red_card: tEvents("yellow_red_card"),
+      substitution: tEvents("substitution"),
+    }),
+    [tEvents],
+  );
+
   if (events.length === 0) {
     return (
-      <p className="text-xs text-white/50">No match events yet.</p>
+      <p className="text-xs text-white/50">{t("noEvents")}</p>
     );
   }
 
@@ -94,7 +114,7 @@ export function MatchEventsTimeline({
               <div className="flex items-center gap-1.5">
                 <span aria-hidden>{eventIcon(event.type)}</span>
                 <span className="font-medium text-white/85">
-                  {formatEventTypeLabel(event.type)}
+                  {formatEventTypeLabel(event.type, eventLabels)}
                 </span>
               </div>
               <p className="line-clamp-2 text-white/70">

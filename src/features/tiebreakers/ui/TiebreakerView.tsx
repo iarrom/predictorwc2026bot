@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import { useLiveRefresh } from "@/shared/lib/supabase/useLiveRefresh";
 import type { TiebreakerRoundState } from "@/entities/tiebreaker/model/types";
 import { formatTiebreakerDeadline } from "@/features/tiebreakers/lib/formatDeadline";
 import { formatTiebreakerMatchCount } from "@/features/tiebreakers/lib/formatMatchCount";
 import { TiebreakerDrawer } from "@/features/tiebreakers/ui/TiebreakerDrawer";
+import type { Locale } from "@/shared/types/database";
 import { cn } from "@/lib/utils";
 
 interface TiebreakerViewProps {
@@ -16,13 +18,17 @@ interface TiebreakerViewProps {
 
 function RoundStatus({
   round,
+  locale,
+  t,
 }: {
   round: TiebreakerRoundState;
+  locale: Locale;
+  t: ReturnType<typeof useTranslations<"tiebreaker">>;
 }) {
   if (round.locked) {
     return (
       <span className="text-[11px] font-medium text-muted-foreground">
-        Locked
+        {t("locked")}
       </span>
     );
   }
@@ -30,23 +36,36 @@ function RoundStatus({
   if (!round.deadlineAt) {
     return (
       <span className="text-[11px] font-medium text-muted-foreground">
-        Unavailable
+        {t("unavailable")}
       </span>
     );
   }
 
   return (
     <span className="text-[11px] text-muted-foreground">
-      Until {formatTiebreakerDeadline(round.deadlineAt)}
+      {t("until", {
+        deadline: formatTiebreakerDeadline(round.deadlineAt, locale),
+      })}
     </span>
   );
 }
 
 export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
   const router = useRouter();
+  const locale = useLocale() as Locale;
+  const t = useTranslations("tiebreaker");
   const [activeRoundKey, setActiveRoundKey] = useState<string | null>(null);
 
   useLiveRefresh("tiebreaker-live", "tiebreakers");
+
+  const matchCountMessages = useMemo(
+    () => ({
+      none: t("matchCount.none"),
+      one: (count: number) => t("matchCount.one", { count }),
+      other: (count: number) => t("matchCount.other", { count }),
+    }),
+    [t],
+  );
 
   const activeRound =
     rounds.find((round) => round.roundKey === activeRoundKey) ?? null;
@@ -57,11 +76,10 @@ export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
         <div className="sports-panel corner-squircle sports-panel-max-h flex flex-col">
           <div className="shrink-0 border-b border-white/[0.08] px-4 py-3">
             <h1 className="text-[15px] font-semibold text-foreground">
-              Tie-break
+              {t("title")}
             </h1>
             <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-              Predict total goals scored in each round. Used as a tie-breaker
-              when points are equal.
+              {t("description")}
             </p>
           </div>
 
@@ -89,12 +107,15 @@ export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
                 >
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium leading-tight text-foreground">
-                      {round.label}
+                      {t(`rounds.${round.roundKey}`)}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {formatTiebreakerMatchCount(round.matchCount)}
+                      {formatTiebreakerMatchCount(
+                        round.matchCount,
+                        matchCountMessages,
+                      )}
                     </p>
-                    <RoundStatus round={round} />
+                    <RoundStatus round={round} locale={locale} t={t} />
                   </div>
                   <p className="text-right text-[17px] font-bold leading-none tabular-nums text-foreground">
                     {round.goals ?? "—"}

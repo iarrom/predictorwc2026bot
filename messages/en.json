@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "title": "WC 2026 Predictor",
+    "description": "FIFA World Cup 2026 match outcome predictions"
+  },
+  "nav": {
+    "main": "Main navigation",
+    "matches": "Matches",
+    "tiebreaker": "Tie-break",
+    "leaderboard": "Leaderboard",
+    "settings": "Settings",
+    "admin": "Admin"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "uploading": "Uploading...",
+    "you": "You",
+    "errors": {
+      "notAuthenticated": "Not authenticated",
+      "invalidInput": "Invalid input",
+      "forbidden": "Forbidden",
+      "missingTelegramInitData": "Missing Telegram init data",
+      "missingBotToken": "Missing TELEGRAM_BOT_TOKEN in server config",
+      "missingAuthPepper": "Missing TELEGRAM_AUTH_PEPPER in server config",
+      "invalidTelegramData": "Invalid Telegram data",
+      "telegramUserNotFound": "Telegram user not found in init data",
+      "outsideTelegram": "outside_telegram",
+      "invalidDevTelegramId": "Invalid DEV_TELEGRAM_ID",
+      "votingRequiresApproval": "Voting is available after an admin approves your account.",
+      "matchNotFound": "Match not found",
+      "predictionsLocked": "Predictions are locked after kickoff",
+      "tiebreakerRequiresApproval": "Tie-breaker picks are available after account approval",
+      "invalidRound": "Invalid round",
+      "goalsRange": "Goals must be an integer between 0 and {max}",
+      "roundLocked": "This round is locked",
+      "roundNotFound": "Round not found",
+      "cantChangeOwnAdminRole": "You can't change your own admin role",
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name must be 32 characters or less",
+      "chooseImage": "Please choose an image",
+      "imageTooLarge": "Image must be 5 MB or smaller",
+      "unsupportedImageFormat": "Unsupported image format",
+      "failedProcessImage": "Failed to process image",
+      "failedReplaceAvatar": "Failed to replace avatar",
+      "failedUploadAvatar": "Failed to upload avatar",
+      "failedConvertHeic": "Failed to convert HEIC image",
+      "failedLoadImage": "Failed to load image",
+      "authFailed": "Authentication failed"
+    }
+  },
+  "auth": {
+    "openInTelegram": "Open this app inside Telegram to sign in.",
+    "signingIn": "Signing in via Telegram…"
+  },
+  "matches": {
+    "scheduleTabs": "Match schedule",
+    "tabPast": "Past",
+    "tabUpcoming3days": "Next 3 days",
+    "tabFuture": "Future",
+    "emptyTitle": "No matches",
+    "emptyPast": "Nothing in past games.",
+    "emptyUpcoming3days": "Nothing in the next 3 days.",
+    "emptyFuture": "Nothing scheduled further out.",
+    "missed": "Missed",
+    "noPick": "No pick",
+    "myPick": "My pick",
+    "pts": "{count} pts",
+    "ptsPositive": "+{count} pts",
+    "live": "Live",
+    "liveMinute": "Live {minute}",
+    "groupStage": "Group Stage",
+    "groupStageMatch": "Group Stage · Match {number}",
+    "roundMatch": "{round} · Match {number}",
+    "standings": "Standings",
+    "lineups": "Line-ups",
+    "updates": "Updates",
+    "predictions": "Predictions",
+    "yourPrediction": "Your prediction",
+    "noPrediction": "No prediction",
+    "noPredictionsYet": "No predictions yet.",
+    "player": "Player",
+    "pick": "Pick",
+    "points": "Points",
+    "ptsLive": "Pts (live)",
+    "playerRank": "Player {rank}",
+    "noEvents": "No match events yet.",
+    "lineupsUnavailable": "Lineups not available yet.",
+    "tbd": "{team}: TBD",
+    "coach": "Coach: {name}",
+    "startingXi": "Starting XI",
+    "bench": "Bench",
+    "team": "Team",
+    "standingsStats": {
+      "GP": "GP",
+      "W": "W",
+      "D": "D",
+      "L": "L",
+      "GD": "GD",
+      "PTS": "PTS"
+    }
+  },
+  "match": {
+    "outcome": {
+      "draw": "Draw",
+      "homeWins": "{team} wins",
+      "awayWins": "{team} wins",
+      "drawShort": "X · Draw",
+      "homeShort": "1 · {team}",
+      "awayShort": "2 · {team}"
+    },
+    "events": {
+      "goal": "Goal",
+      "penalty": "Penalty",
+      "own_goal": "Own goal",
+      "yellow_card": "Yellow card",
+      "red_card": "Red card",
+      "yellow_red_card": "Second yellow",
+      "substitution": "Substitution"
+    }
+  },
+  "predictions": {
+    "draw": "Draw",
+    "save": "Save prediction",
+    "saving": "Saving…",
+    "changeMind": "I change my mind",
+    "locked": "Predictions are locked.",
+    "yourPick": "Your pick: {pick}",
+    "guestMessage": "You can browse matches and the leaderboard. Voting opens after an admin approves your account."
+  },
+  "tiebreaker": {
+    "title": "Tie-break",
+    "description": "Predict total goals scored in each round. Used as a tie-breaker when points are equal.",
+    "locked": "Locked",
+    "unavailable": "Unavailable",
+    "until": "Until {deadline}",
+    "roundLocked": "This round is locked.",
+    "guestMessage": "You can browse matches and the leaderboard. Tie-breaker picks open after an admin approves your account.",
+    "drawerLocked": "Locked after the first match in this round.",
+    "drawerOpenUntil": "Open until {deadline}",
+    "drawerNoMatches": "No matches scheduled for this round yet.",
+    "wheelAria": "Total goals for {round}",
+    "rounds": {
+      "group_1": "Matchday 1",
+      "group_2": "Matchday 2",
+      "group_3": "Matchday 3",
+      "playoff": "Playoffs"
+    },
+    "matchCount": {
+      "none": "No matches scheduled",
+      "one": "{count} match",
+      "other": "{count} matches"
+    }
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "description": "Rankings by points earned from correct outcome predictions",
+    "noPlayers": "No players yet.",
+    "player": "Player",
+    "points": "Points",
+    "picks": "Picks",
+    "rank1": "1st place",
+    "rank2": "2nd place",
+    "rank3": "3rd place"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Manage your profile and notification preferences",
+    "profile": "Profile",
+    "profileDescription": "Update your display name and avatar. Custom values are kept after Telegram sign-in.",
+    "avatar": "Avatar",
+    "changePhoto": "Change photo",
+    "imageFormats": "JPEG, PNG, WebP, or HEIC from iOS",
+    "displayName": "Display name",
+    "nameUpdated": "Name updated",
+    "goalNotifications": "Goal notifications",
+    "goalNotificationsDescription": "Get a Telegram message when a goal is scored and the score changes during live matches.",
+    "language": "Language",
+    "languageDescription": "App and Telegram notification language.",
+    "languages": {
+      "en": "English",
+      "ru": "Русский",
+      "pl": "Polski"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "Manage participants, match results, and schedule data.",
+    "pendingApproval": "Pending approval",
+    "pendingDescription": "New guests waiting to be promoted to participant.",
+    "noNewGuests": "No new guests.",
+    "members": "Members",
+    "membersDescription": "Participants and admins. Change roles or revoke access.",
+    "noMembers": "No members yet.",
+    "allUsers": "All users",
+    "allUsersSummary": "{total} total · {admins} admins · {participants} participants · {guests} guests",
+    "noUsers": "No users yet.",
+    "you": "(you)",
+    "joined": "joined {date}",
+    "dataImport": "Data import",
+    "dataImportDescription": "Load schedule and squads from external sources.",
+    "importSchedule": "— schedule (OpenFootball)",
+    "importSquads": "— squads (Wikipedia)",
+    "roles": {
+      "guest": "Guest",
+      "participant": "Participant",
+      "admin": "Admin"
+    }
+  }
+}

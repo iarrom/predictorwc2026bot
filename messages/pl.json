@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "title": "WC 2026 Predictor",
+    "description": "Typy wyników meczów MŚ 2026"
+  },
+  "nav": {
+    "main": "Nawigacja główna",
+    "matches": "Mecze",
+    "tiebreaker": "Dogrywka",
+    "leaderboard": "Ranking",
+    "settings": "Ustawienia",
+    "admin": "Admin"
+  },
+  "common": {
+    "save": "Zapisz",
+    "saving": "Zapisywanie…",
+    "uploading": "Przesyłanie...",
+    "you": "Ty",
+    "errors": {
+      "notAuthenticated": "Nie zalogowano",
+      "invalidInput": "Nieprawidłowe dane",
+      "forbidden": "Brak dostępu",
+      "missingTelegramInitData": "Brak danych Telegram init data",
+      "missingBotToken": "Brak TELEGRAM_BOT_TOKEN w konfiguracji",
+      "missingAuthPepper": "Brak TELEGRAM_AUTH_PEPPER w konfiguracji",
+      "invalidTelegramData": "Nieprawidłowe dane Telegram",
+      "telegramUserNotFound": "Nie znaleziono użytkownika Telegram w init data",
+      "outsideTelegram": "outside_telegram",
+      "invalidDevTelegramId": "Nieprawidłowy DEV_TELEGRAM_ID",
+      "votingRequiresApproval": "Głosowanie dostępne po zatwierdzeniu konta przez admina.",
+      "matchNotFound": "Nie znaleziono meczu",
+      "predictionsLocked": "Typy zamknięte po rozpoczęciu meczu",
+      "tiebreakerRequiresApproval": "Dogrywka dostępna po zatwierdzeniu konta",
+      "invalidRound": "Nieprawidłowa runda",
+      "goalsRange": "Gole muszą być liczbą całkowitą od 0 do {max}",
+      "roundLocked": "Ta runda jest zamknięta",
+      "roundNotFound": "Nie znaleziono rundy",
+      "cantChangeOwnAdminRole": "Nie możesz odebrać sobie roli admina",
+      "nameRequired": "Imię jest wymagane",
+      "nameTooLong": "Imię może mieć maksymalnie 32 znaki",
+      "chooseImage": "Wybierz obraz",
+      "imageTooLarge": "Obraz musi mieć maksymalnie 5 MB",
+      "unsupportedImageFormat": "Nieobsługiwany format obrazu",
+      "failedProcessImage": "Nie udało się przetworzyć obrazu",
+      "failedReplaceAvatar": "Nie udało się zastąpić awatara",
+      "failedUploadAvatar": "Nie udało się przesłać awatara",
+      "failedConvertHeic": "Nie udało się przekonwertować HEIC",
+      "failedLoadImage": "Nie udało się załadować obrazu",
+      "authFailed": "Błąd logowania"
+    }
+  },
+  "auth": {
+    "openInTelegram": "Otwórz aplikację w Telegramie, aby się zalogować.",
+    "signingIn": "Logowanie przez Telegram…"
+  },
+  "matches": {
+    "scheduleTabs": "Terminarz meczów",
+    "tabPast": "Minione",
+    "tabUpcoming3days": "3 dni",
+    "tabFuture": "Później",
+    "emptyTitle": "Brak meczów",
+    "emptyPast": "Brak rozegranych meczów.",
+    "emptyUpcoming3days": "Brak meczów w najbliższe 3 dni.",
+    "emptyFuture": "Brak zaplanowanych meczów.",
+    "missed": "Pominięty",
+    "noPick": "Brak typu",
+    "myPick": "Mój typ",
+    "pts": "{count} pkt",
+    "ptsPositive": "+{count} pkt",
+    "live": "Live",
+    "liveMinute": "Live {minute}",
+    "groupStage": "Faza grupowa",
+    "groupStageMatch": "Faza grupowa · Mecz {number}",
+    "roundMatch": "{round} · Mecz {number}",
+    "standings": "Tabela",
+    "lineups": "Składy",
+    "updates": "Wydarzenia",
+    "predictions": "Typy",
+    "yourPrediction": "Twój typ",
+    "noPrediction": "Brak typu",
+    "noPredictionsYet": "Brak typów.",
+    "player": "Gracz",
+    "pick": "Typ",
+    "points": "Punkty",
+    "ptsLive": "Pkt (live)",
+    "playerRank": "Gracz {rank}",
+    "noEvents": "Brak wydarzeń w meczu.",
+    "lineupsUnavailable": "Składy jeszcze niedostępne.",
+    "tbd": "{team}: do ustalenia",
+    "coach": "Trener: {name}",
+    "startingXi": "Podstawowy skład",
+    "bench": "Ławka",
+    "team": "Drużyna",
+    "standingsStats": {
+      "GP": "M",
+      "W": "Z",
+      "D": "R",
+      "L": "P",
+      "GD": "BZ",
+      "PTS": "Pkt"
+    }
+  },
+  "match": {
+    "outcome": {
+      "draw": "Remis",
+      "homeWins": "Wygrana {team}",
+      "awayWins": "Wygrana {team}",
+      "drawShort": "X · Remis",
+      "homeShort": "1 · {team}",
+      "awayShort": "2 · {team}"
+    },
+    "events": {
+      "goal": "Gol",
+      "penalty": "Karny",
+      "own_goal": "Samobój",
+      "yellow_card": "Żółta kartka",
+      "red_card": "Czerwona kartka",
+      "yellow_red_card": "Druga żółta",
+      "substitution": "Zmiana"
+    }
+  },
+  "predictions": {
+    "draw": "Remis",
+    "save": "Zapisz typ",
+    "saving": "Zapisywanie…",
+    "changeMind": "Zmieniam zdanie",
+    "locked": "Typy są zamknięte.",
+    "yourPick": "Twój typ: {pick}",
+    "guestMessage": "Możesz przeglądać mecze i ranking. Głosowanie otworzy się po zatwierdzeniu konta przez admina."
+  },
+  "tiebreaker": {
+    "title": "Dogrywka",
+    "description": "Typuj łączną liczbę goli w każdej rundzie. Używane przy remisie punktowym.",
+    "locked": "Zamknięte",
+    "unavailable": "Niedostępne",
+    "until": "Do {deadline}",
+    "roundLocked": "Ta runda jest zamknięta.",
+    "guestMessage": "Możesz przeglądać mecze i ranking. Dogrywka otworzy się po zatwierdzeniu konta.",
+    "drawerLocked": "Zamknięte po pierwszym meczu rundy.",
+    "drawerOpenUntil": "Otwarte do {deadline}",
+    "drawerNoMatches": "Brak zaplanowanych meczów w tej rundzie.",
+    "wheelAria": "Łączna liczba goli w {round}",
+    "rounds": {
+      "group_1": "Kolejka 1",
+      "group_2": "Kolejka 2",
+      "group_3": "Kolejka 3",
+      "playoff": "Play-off"
+    },
+    "matchCount": {
+      "none": "Brak zaplanowanych meczów",
+      "one": "{count} mecz",
+      "other": "{count} meczów"
+    }
+  },
+  "leaderboard": {
+    "title": "Ranking",
+    "description": "Ranking według punktów za trafione typy wyników",
+    "noPlayers": "Brak graczy.",
+    "player": "Gracz",
+    "points": "Punkty",
+    "picks": "Typy",
+    "rank1": "1. miejsce",
+    "rank2": "2. miejsce",
+    "rank3": "3. miejsce"
+  },
+  "settings": {
+    "title": "Ustawienia",
+    "description": "Profil i powiadomienia",
+    "profile": "Profil",
+    "profileDescription": "Imię i awatar. Własne wartości są zachowywane po logowaniu przez Telegram.",
+    "avatar": "Awatar",
+    "changePhoto": "Zmień zdjęcie",
+    "imageFormats": "JPEG, PNG, WebP lub HEIC z iOS",
+    "displayName": "Wyświetlana nazwa",
+    "nameUpdated": "Nazwa zaktualizowana",
+    "goalNotifications": "Powiadomienia o golach",
+    "goalNotificationsDescription": "Wiadomość w Telegramie przy golu i zmianie wyniku w meczach na żywo.",
+    "language": "Język",
+    "languageDescription": "Język aplikacji i powiadomień Telegram.",
+    "languages": {
+      "en": "English",
+      "ru": "Русский",
+      "pl": "Polski"
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "Uczestnicy, wyniki meczów i dane terminarza.",
+    "pendingApproval": "Oczekujący na zatwierdzenie",
+    "pendingDescription": "Nowi goście czekający na status uczestnika.",
+    "noNewGuests": "Brak nowych gości.",
+    "members": "Członkowie",
+    "membersDescription": "Uczestnicy i admini. Zmiana ról i cofanie dostępu.",
+    "noMembers": "Brak członków.",
+    "allUsers": "Wszyscy użytkownicy",
+    "allUsersSummary": "łącznie {total} · {admins} adminów · {participants} uczestników · {guests} gości",
+    "noUsers": "Brak użytkowników.",
+    "you": "(ty)",
+    "joined": "dołączył {date}",
+    "dataImport": "Import danych",
+    "dataImportDescription": "Ładowanie terminarza i składów ze źródeł zewnętrznych.",
+    "importSchedule": "— terminarz (OpenFootball)",
+    "importSquads": "— składy (Wikipedia)",
+    "roles": {
+      "guest": "Gość",
+      "participant": "Uczestnik",
+      "admin": "Admin"
+    }
+  }
+}

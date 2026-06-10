@@ -1,4 +1,5 @@
 export type UserRole = "guest" | "participant" | "admin";
+export type Locale = "en" | "ru" | "pl";
 export type PredictionOutcome = "home" | "draw" | "away";
 export type PlayerPosition = "GK" | "DF" | "MF" | "FW";
 export type MatchStatus = "scheduled" | "live" | "finished";
@@ -23,6 +24,8 @@ export interface Database {
           photo_url: string | null;
           timezone: string | null;
           notify_goals: boolean;
+          locale: Locale;
+          locale_custom: boolean;
           display_name_custom: boolean;
           avatar_custom: boolean;
           role: UserRole;
@@ -36,6 +39,8 @@ export interface Database {
           photo_url?: string | null;
           timezone?: string | null;
           notify_goals?: boolean;
+          locale?: Locale;
+          locale_custom?: boolean;
           display_name_custom?: boolean;
           avatar_custom?: boolean;
           role?: UserRole;

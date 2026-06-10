@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import type {
   GroupStanding,
   TeamStandingRow,
@@ -6,7 +9,7 @@ import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { cn } from "@/lib/utils";
 
 const FLAG_SIZE = 16;
-const STAT_COLUMNS = ["GP", "W", "D", "L", "GD", "PTS"] as const;
+const STAT_COLUMN_KEYS = ["GP", "W", "D", "L", "GD", "PTS"] as const;
 
 const ROW_GRID =
   "grid grid-cols-[0.875rem_1rem_minmax(0,1fr)_repeat(6,1.25rem)] items-center gap-x-1.5";
@@ -84,9 +87,11 @@ export function GroupStandingsCard({
   className?: string;
   highlightedTeams?: string[];
 }) {
+  const t = useTranslations("matches");
   const highlightedTeamSet = highlightedTeams
     ? new Set(highlightedTeams)
     : null;
+
   return (
     <section
       className={cn("sports-panel corner-squircle overflow-hidden", className)}
@@ -103,10 +108,10 @@ export function GroupStandingsCard({
       >
         <span aria-hidden />
         <span aria-hidden />
-        <span>Team</span>
-        {STAT_COLUMNS.map((column) => (
+        <span>{t("team")}</span>
+        {STAT_COLUMN_KEYS.map((column) => (
           <span key={column} className="text-center">
-            {column}
+            {t(`standingsStats.${column}`)}
           </span>
         ))}
       </div>

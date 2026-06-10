@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { savePrediction } from "@/features/predictions/actions";
+import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -26,17 +28,21 @@ function PredictionSummary({
   homeTeamName,
   awayTeamName,
   onEdit,
+  outcomeMessages,
+  t,
 }: {
   outcome: PredictionOutcome;
   homeTeamName: string;
   awayTeamName: string;
   onEdit: () => void;
+  outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  t: ReturnType<typeof useTranslations<"predictions">>;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col justify-between gap-4">
       <div className="flex flex-col gap-1 text-center">
         <p className="text-lg font-bold leading-tight text-white">
-          {formatOutcomeWins(outcome, homeTeamName, awayTeamName)}
+          {formatOutcomeWins(outcome, homeTeamName, awayTeamName, outcomeMessages)}
         </p>
       </div>
       <Button
@@ -46,7 +52,7 @@ function PredictionSummary({
         onClick={onEdit}
         className="shrink-0 bg-white text-black hover:bg-white/90 aria-expanded:bg-white aria-expanded:text-black"
       >
-        I change my mind
+        {t("changeMind")}
       </Button>
     </div>
   );
@@ -61,6 +67,13 @@ export function PredictionForm({
   canPredict,
 }: PredictionFormProps) {
   const router = useRouter();
+  const t = useTranslations("predictions");
+  const tOutcome = useTranslations("match.outcome");
+  const outcomeMessages = useMemo(
+    () => createOutcomeMessages(tOutcome),
+    [tOutcome],
+  );
+
   const [mode, setMode] = useState<"readonly" | "edit">(
     initial ? "readonly" : "edit",
   );
@@ -89,18 +102,22 @@ export function PredictionForm({
     return (
       <p className="text-sm text-white/70">
         {initial
-          ? `Your pick: ${formatOutcomeWins(initial.outcome, homeTeamName, awayTeamName)}`
-          : "Predictions are locked."}
+          ? t("yourPick", {
+              pick: formatOutcomeWins(
+                initial.outcome,
+                homeTeamName,
+                awayTeamName,
+                outcomeMessages,
+              ),
+            })
+          : t("locked")}
       </p>
     );
   }
 
   if (!canPredict) {
     return (
-      <p className="text-sm text-white/70">
-        You can browse matches and the leaderboard. Voting opens after an
-        admin approves your account.
-      </p>
+      <p className="text-sm text-white/70">{t("guestMessage")}</p>
     );
   }
 
@@ -111,6 +128,8 @@ export function PredictionForm({
         homeTeamName={homeTeamName}
         awayTeamName={awayTeamName}
         onEdit={() => setMode("edit")}
+        outcomeMessages={outcomeMessages}
+        t={t}
       />
     );
   }
@@ -140,7 +159,7 @@ export function PredictionForm({
               </TabsTrigger>
               <TabsTrigger value="draw" className={outcomeTabClassName}>
                 <span className="text-lg font-bold">X</span>
-                <span className="text-[10px] leading-tight">Draw</span>
+                <span className="text-[10px] leading-tight">{t("draw")}</span>
               </TabsTrigger>
               <TabsTrigger value="away" className={outcomeTabClassName}>
                 <span className="text-lg font-bold">2</span>
@@ -161,7 +180,7 @@ export function PredictionForm({
         size="xl"
         className="w-full shrink-0 bg-white text-black hover:bg-white/90"
       >
-        {pending ? "Saving…" : "Save prediction"}
+        {pending ? t("saving") : t("save")}
       </Button>
     </form>
   );

@@ -1,5 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  buildDigestMessage,
+  getReminderNotificationButton,
+  normalizeNotificationLocale,
+} from "../_shared/notifications-i18n.ts";
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 const DEFAULT_TIMEZONE = "UTC";
@@ -15,6 +20,7 @@ interface ReminderProfile {
   id: string;
   telegram_id: number;
   timezone: string | null;
+  locale: string | null;
 }
 
 function resolveTimeZone(timezone: string | null): string {
@@ -28,74 +34,11 @@ function resolveTimeZone(timezone: string | null): string {
   }
 }
 
-function formatKickoffLine(kickoffAt: string, timeZone: string): string {
-  const kickoff = new Date(kickoffAt);
-  const now = new Date();
-
-  const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-
-  const timeFormatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
-  const partValue = (parts: Intl.DateTimeFormatPart[], type: string) =>
-    parts.find((part) => part.type === type)?.value;
-
-  const todayParts = dateFormatter.formatToParts(now);
-  const kickoffParts = dateFormatter.formatToParts(kickoff);
-  const time = timeFormatter.format(kickoff);
-
-  const isToday =
-    partValue(todayParts, "year") === partValue(kickoffParts, "year") &&
-    partValue(todayParts, "month") === partValue(kickoffParts, "month") &&
-    partValue(todayParts, "day") === partValue(kickoffParts, "day");
-
-  if (isToday) {
-    return `today at ${time}`;
-  }
-
-  const dayFormatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-
-  return `${dayFormatter.format(kickoff)} at ${time}`;
-}
-
-function buildDigestMessage(
-  matches: ReminderMatch[],
-  timeZone: string,
-): string {
-  const lines = matches.map(
-    (match) =>
-      `• ${match.home_team_name} vs ${match.away_team_name} — ${formatKickoffLine(match.kickoff_at, timeZone)}`,
-  );
-
-  return [
-    "⚽️ Prediction reminder",
-    "",
-    "You haven't predicted these upcoming matches:",
-    "",
-    ...lines,
-    "",
-    "Kickoff times are shown in your local time. Predictions close at kickoff!",
-  ].join("\n");
-}
-
 async function sendTelegramMessage(
   botToken: string,
   chatId: number,
   text: string,
+  buttonText: string,
   miniAppUrl: string,
 ): Promise<boolean> {
   const appUrl = `${miniAppUrl.replace(/\/$/, "")}/matches`;
@@ -110,7 +53,7 @@ async function sendTelegramMessage(
         reply_markup: {
           inline_keyboard: [[
             {
-              text: "⚡️ Make predictions",
+              text: buttonText,
               web_app: { url: appUrl },
             },
           ]],
@@ -189,7 +132,7 @@ Deno.serve(async (req) => {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, telegram_id, timezone")
+        .select("id, telegram_id, timezone, locale")
         .in("role", ["participant", "admin"])
         .not("telegram_id", "is", null),
       supabase
@@ -226,12 +169,15 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      const locale = normalizeNotificationLocale(profile.locale);
       const timeZone = resolveTimeZone(profile.timezone);
-      const message = buildDigestMessage(pendingMatches, timeZone);
+      const message = buildDigestMessage(pendingMatches, timeZone, locale);
+      const buttonText = getReminderNotificationButton(locale);
       const delivered = await sendTelegramMessage(
         botToken,
         profile.telegram_id,
         message,
+        buttonText,
         miniAppUrl,
       );
 

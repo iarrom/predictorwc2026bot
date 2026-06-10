@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import {
   TIEBREAKER_ROUND_KEYS,
@@ -28,17 +29,18 @@ export async function saveTiebreaker(
   _prev: { error?: string } | null,
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
+  const t = await getTranslations("common.errors");
   const userId = await getCurrentUserId();
-  if (!userId) return { error: "Not authenticated" };
+  if (!userId) return { error: t("notAuthenticated") };
 
   const canEdit = await isParticipant();
   if (!canEdit) {
-    return { error: "Tie-breaker picks are available after account approval" };
+    return { error: t("tiebreakerRequiresApproval") };
   }
 
   const roundKeyResult = roundKeySchema.safeParse(formData.get("round_key"));
   if (!roundKeyResult.success) {
-    return { error: "Invalid round" };
+    return { error: t("invalidRound") };
   }
 
   const roundKey = roundKeyResult.data;
@@ -53,7 +55,7 @@ export async function saveTiebreaker(
 
   if (!goalsResult.success) {
     return {
-      error: `Goals must be an integer between 0 and ${maxGoals}`,
+      error: t("goalsRange", { max: maxGoals }),
     };
   }
 
@@ -68,7 +70,7 @@ export async function saveTiebreaker(
 
   const deadlineAt = getTiebreakerRoundDeadline(matches ?? [], roundKey);
   if (isTiebreakerRoundLocked(deadlineAt)) {
-    return { error: "This round is locked" };
+    return { error: t("roundLocked") };
   }
 
   const roundMatches = (matches ?? []).filter((match) =>
@@ -76,7 +78,7 @@ export async function saveTiebreaker(
   );
 
   if (roundMatches.length === 0) {
-    return { error: "Round not found" };
+    return { error: t("roundNotFound") };
   }
 
   const goalsEncrypted = encryptTiebreakerGoals(goalsResult.data, {

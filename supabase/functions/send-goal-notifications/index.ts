@@ -1,5 +1,11 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {
+  buildGoalMessage,
+  getGoalNotificationButton,
+  normalizeNotificationLocale,
+  type NotificationLocale,
+} from "../_shared/notifications-i18n.ts";
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 const GOAL_TYPES = ["goal", "penalty", "own_goal"] as const;
@@ -32,44 +38,14 @@ interface MatchInfo {
 interface RecipientProfile {
   id: string;
   telegram_id: number;
-}
-
-function formatEventMinute(minute: number, injuryTime: number | null): string {
-  if (injuryTime != null && injuryTime > 0) {
-    return `${minute}+${injuryTime}'`;
-  }
-  return `${minute}'`;
-}
-
-function formatGoalTypeSuffix(type: GoalEventType): string {
-  switch (type) {
-    case "penalty":
-      return " (пенальти)";
-    case "own_goal":
-      return " (автогол)";
-    default:
-      return "";
-  }
-}
-
-function buildGoalMessage(event: GoalEvent, match: MatchInfo): string {
-  const scoreHome = event.score_home ?? match.home_score ?? 0;
-  const scoreAway = event.score_away ?? match.away_score ?? 0;
-  const roundLabel = match.group_name ?? match.round_display;
-  const minuteLabel = formatEventMinute(event.minute, event.injury_time);
-  const typeSuffix = formatGoalTypeSuffix(event.type);
-
-  return [
-    `⚽️ ГОЛ — ${match.home_team_name} ${scoreHome}:${scoreAway} ${match.away_team_name}`,
-    roundLabel,
-    `${minuteLabel} ${event.player_name}${typeSuffix}`,
-  ].join("\n");
+  locale: string | null;
 }
 
 async function sendTelegramMessage(
   botToken: string,
   chatId: number,
   text: string,
+  buttonText: string,
   miniAppUrl: string,
 ): Promise<boolean> {
   const appUrl = `${miniAppUrl.replace(/\/$/, "")}/matches`;
@@ -84,7 +60,7 @@ async function sendTelegramMessage(
         reply_markup: {
           inline_keyboard: [[
             {
-              text: "⚽️ Открыть матчи",
+              text: buttonText,
               web_app: { url: appUrl },
             },
           ]],
@@ -194,7 +170,7 @@ Deno.serve(async (req) => {
 
     const { data: recipients, error: recipientsError } = await supabase
       .from("profiles")
-      .select("id, telegram_id")
+      .select("id, telegram_id, locale")
       .in("role", ["participant", "admin"])
       .eq("notify_goals", true)
       .not("telegram_id", "is", null);
@@ -212,13 +188,28 @@ Deno.serve(async (req) => {
       const match = matchMap.get(event.match_id);
       if (!match) continue;
 
-      const message = buildGoalMessage(event, match);
+      const messageCache = new Map<NotificationLocale, string>();
+      const buttonCache = new Map<NotificationLocale, string>();
 
       for (const profile of recipientProfiles) {
+        const locale = normalizeNotificationLocale(profile.locale);
+        let message = messageCache.get(locale);
+        if (!message) {
+          message = buildGoalMessage(event, match, locale);
+          messageCache.set(locale, message);
+        }
+
+        let buttonText = buttonCache.get(locale);
+        if (!buttonText) {
+          buttonText = getGoalNotificationButton(locale);
+          buttonCache.set(locale, buttonText);
+        }
+
         const delivered = await sendTelegramMessage(
           botToken,
           profile.telegram_id,
           message,
+          buttonText,
           miniAppUrl,
         );
 

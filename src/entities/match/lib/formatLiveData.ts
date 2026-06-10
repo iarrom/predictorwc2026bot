@@ -19,23 +19,19 @@ export function formatEventMinute(
   return `${minute}'`;
 }
 
-export function formatEventTypeLabel(type: string): string {
-  switch (type) {
-    case "goal":
-      return "Goal";
-    case "penalty":
-      return "Penalty";
-    case "own_goal":
-      return "Own goal";
-    case "yellow_card":
-      return "Yellow card";
-    case "red_card":
-      return "Red card";
-    case "yellow_red_card":
-      return "Second yellow";
-    case "substitution":
-      return "Substitution";
-    default:
-      return type;
-  }
+const defaultEventLabels: Record<string, string> = {
+  goal: "Goal",
+  penalty: "Penalty",
+  own_goal: "Own goal",
+  yellow_card: "Yellow card",
+  red_card: "Red card",
+  yellow_red_card: "Second yellow",
+  substitution: "Substitution",
+};
+
+export function formatEventTypeLabel(
+  type: string,
+  labels: Record<string, string> = defaultEventLabels,
+): string {
+  return labels[type] ?? type;
 }

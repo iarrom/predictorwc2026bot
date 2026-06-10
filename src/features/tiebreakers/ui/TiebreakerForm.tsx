@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { TiebreakerRoundState } from "@/entities/tiebreaker/model/types";
 import { saveTiebreaker } from "@/features/tiebreakers/actions";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,8 @@ interface TiebreakerFormProps {
 }
 
 export function TiebreakerForm({ round, canEdit, onSaved }: TiebreakerFormProps) {
+  const t = useTranslations("tiebreaker");
+  const tCommon = useTranslations("common");
   const [goals, setGoals] = useState(round.goals ?? 0);
   const [state, action, pending] = useActionState(
     async (
@@ -36,7 +39,7 @@ export function TiebreakerForm({ round, canEdit, onSaved }: TiebreakerFormProps)
           {round.goals ?? "—"}
         </p>
         <p className="text-center text-sm text-muted-foreground">
-          This round is locked.
+          {t("roundLocked")}
         </p>
       </div>
     );
@@ -45,8 +48,7 @@ export function TiebreakerForm({ round, canEdit, onSaved }: TiebreakerFormProps)
   if (!canEdit) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        You can browse matches and the leaderboard. Tie-breaker picks open
-        after an admin approves your account.
+        {t("guestMessage")}
       </p>
     );
   }
@@ -66,7 +68,9 @@ export function TiebreakerForm({ round, canEdit, onSaved }: TiebreakerFormProps)
               max={round.maxGoals}
               itemHeight={40}
               visibleItems={5}
-              aria-label={`Total goals for ${round.label}`}
+              aria-label={t("wheelAria", {
+                round: t(`rounds.${round.roundKey}`),
+              })}
             />
           </div>
         </Field>
@@ -74,7 +78,7 @@ export function TiebreakerForm({ round, canEdit, onSaved }: TiebreakerFormProps)
       </FieldGroup>
 
       <Button type="submit" size="xl" disabled={pending} className="shrink-0">
-        {pending ? "Saving..." : "Save"}
+        {pending ? tCommon("saving") : tCommon("save")}
       </Button>
     </form>
   );

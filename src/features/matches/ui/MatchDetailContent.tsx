@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
@@ -32,6 +33,8 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
+import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
+import type { Locale } from "@/shared/types/database";
 import { cn } from "@/lib/utils";
 
 interface MatchDetailContentProps {
@@ -64,6 +67,9 @@ function MatchDetailCenterFocus({
   homeTeamName,
   awayTeamName,
   liveMinute,
+  locale,
+  outcomeMessages,
+  t,
 }: {
   prediction: PredictionDetail | undefined;
   locked: boolean;
@@ -75,6 +81,9 @@ function MatchDetailCenterFocus({
   homeTeamName: string;
   awayTeamName: string;
   liveMinute: string | null;
+  locale: Locale;
+  outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   return (
     <div className="col-start-2 row-span-2 flex min-w-20 flex-col items-center justify-center gap-1 self-center">
@@ -84,12 +93,13 @@ function MatchDetailCenterFocus({
             prediction.outcome,
             homeTeamName,
             awayTeamName,
+            outcomeMessages,
           )}
         </p>
       ) : locked ? (
-        <p className="text-lg font-medium text-white/60">Missed</p>
+        <p className="text-lg font-medium text-white/60">{t("missed")}</p>
       ) : (
-        <p className="text-lg font-medium text-red-300">No pick</p>
+        <p className="text-lg font-medium text-red-300">{t("noPick")}</p>
       )}
 
       {showScore && (
@@ -102,30 +112,36 @@ function MatchDetailCenterFocus({
               variant="destructive"
               className="h-5 rounded-md border-0 bg-red-500/20 px-2 text-[10px] font-semibold text-red-300"
             >
-              {liveMinute ? `LIVE ${liveMinute}` : "LIVE"}
+              {liveMinute ? t("liveMinute", { minute: liveMinute }) : t("live")}
             </Badge>
           )}
         </div>
       )}
 
       <p className="text-center text-[11px] text-white/70">
-        {formatMatchTime(kickoffAt)}
+        {formatMatchTime(kickoffAt, locale)}
         <span className="mx-1 text-white/35">·</span>
-        {formatMatchKickoffDate(kickoffAt)}
+        {formatMatchKickoffDate(kickoffAt, locale)}
       </p>
     </div>
   );
 }
 
-function formatMatchSubtitle(match: Match): string {
+function formatMatchSubtitle(
+  match: Match,
+  t: ReturnType<typeof useTranslations<"matches">>,
+): string {
   if (match.round_key.startsWith("group_")) {
     return match.match_number != null
-      ? `Group Stage · Match ${match.match_number}`
-      : "Group Stage";
+      ? t("groupStageMatch", { number: match.match_number })
+      : t("groupStage");
   }
 
   if (match.match_number != null) {
-    return `${match.round_display} · Match ${match.match_number}`;
+    return t("roundMatch", {
+      round: match.round_display,
+      number: match.match_number,
+    });
   }
 
   return match.round_display;
@@ -136,14 +152,18 @@ function LockedPredictionSummary({
   homeTeamName,
   awayTeamName,
   finished,
+  outcomeMessages,
+  t,
 }: {
   prediction: PredictionDetail | undefined;
   homeTeamName: string;
   awayTeamName: string;
   finished: boolean;
+  outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   if (!prediction) {
-    return <p className="text-sm text-white/70">No prediction</p>;
+    return <p className="text-sm text-white/70">{t("noPrediction")}</p>;
   }
 
   const points = prediction.points_awarded;
@@ -151,7 +171,12 @@ function LockedPredictionSummary({
   return (
     <div className="flex flex-col gap-2">
       <p className="text-lg font-bold leading-tight text-white">
-        {formatOutcomeWins(prediction.outcome, homeTeamName, awayTeamName)}
+        {formatOutcomeWins(
+          prediction.outcome,
+          homeTeamName,
+          awayTeamName,
+          outcomeMessages,
+        )}
       </p>
       {finished && points !== null && (
         <p
@@ -160,7 +185,9 @@ function LockedPredictionSummary({
             points > 0 ? "text-emerald-300" : "text-white/60",
           )}
         >
-          {points > 0 ? `+${points} pts` : `${points} pts`}
+          {points > 0
+            ? t("ptsPositive", { count: points })
+            : t("pts", { count: points })}
         </p>
       )}
     </div>
@@ -182,6 +209,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   expanded = false,
   onRequestExpand,
 }: MatchDetailContentProps) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("matches");
+  const tOutcome = useTranslations("match.outcome");
+  const outcomeMessages = useMemo(
+    () => createOutcomeMessages(tOutcome),
+    [tOutcome],
+  );
+
   const locked = new Date(match.kickoff_at) <= new Date();
   const live =
     match.status === "live" &&
@@ -226,7 +261,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
       >
         <section className="flex shrink-0 flex-col gap-2 pb-4">
           <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
-            {formatMatchSubtitle(match)}
+            {formatMatchSubtitle(match, t)}
           </p>
 
           <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_auto] items-center gap-x-3 gap-y-1.5">
@@ -245,6 +280,9 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               homeTeamName={match.home_team_name}
               awayTeamName={match.away_team_name}
               liveMinute={liveMinute}
+              locale={locale}
+              outcomeMessages={outcomeMessages}
+              t={t}
             />
 
             <div className="col-start-3 row-start-1 flex justify-center">
@@ -272,7 +310,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         {showPredictionSection && (
           <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
             <h2 className="mb-3 shrink-0 font-heading text-base font-medium text-white">
-              {predictionsRevealed ? "Predictions" : "Your prediction"}
+              {predictionsRevealed ? t("predictions") : t("yourPrediction")}
             </h2>
 
             <div className="flex flex-col">
@@ -290,6 +328,8 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                     homeTeamName={match.home_team_name}
                     awayTeamName={match.away_team_name}
                     finished={finished}
+                    outcomeMessages={outcomeMessages}
+                    t={t}
                   />
                 )
               ) : (
@@ -328,14 +368,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
             >
               {groupStanding && (
                 <TabsTrigger value="standings" className={matchTabClassName}>
-                  Standings
+                  {t("standings")}
                 </TabsTrigger>
               )}
               <TabsTrigger value="lineups" className={matchTabClassName}>
-                Line-ups
+                {t("lineups")}
               </TabsTrigger>
               <TabsTrigger value="updates" className={matchTabClassName}>
-                Updates
+                {t("updates")}
               </TabsTrigger>
             </TabsList>
 

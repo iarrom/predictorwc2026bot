@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
 import {
   Card,
   CardContent,
@@ -9,11 +10,15 @@ import {
 import { getCurrentUserId, isAdmin } from "@/shared/lib/auth";
 import { createClient } from "@/shared/lib/supabase/server";
 import type { UserRole } from "@/shared/types/database";
+import { toIntlLocale } from "@/i18n/config";
+import type { Locale } from "@/shared/types/database";
 import { MemberRoleControls } from "@/features/admin/ui/MemberRoleControls";
 
 export default async function AdminPage() {
   if (!(await isAdmin())) redirect("/matches");
 
+  const t = await getTranslations("admin");
+  const locale = (await getLocale()) as Locale;
   const currentUserId = await getCurrentUserId();
   const supabase = await createClient();
   const { data: profiles } = await supabase
@@ -25,7 +30,7 @@ export default async function AdminPage() {
   const guests = allUsers.filter((p) => p.role === "guest");
   const members = allUsers.filter((p) => p.role !== "guest");
 
-  const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+  const dateFormatter = new Intl.DateTimeFormat(toIntlLocale(locale), {
     day: "2-digit",
     month: "short",
     hour: "2-digit",
@@ -35,22 +40,20 @@ export default async function AdminPage() {
   return (
     <div className="flex flex-col gap-4 animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
       <div>
-        <h1 className="text-xl font-bold">Admin</h1>
+        <h1 className="text-xl font-bold">{t("title")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage participants, match results, and schedule data.
+          {t("description")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Pending approval</CardTitle>
-          <CardDescription>
-            New guests waiting to be promoted to participant.
-          </CardDescription>
+          <CardTitle>{t("pendingApproval")}</CardTitle>
+          <CardDescription>{t("pendingDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {!guests.length ? (
-            <p className="text-sm text-muted-foreground">No new guests.</p>
+            <p className="text-sm text-muted-foreground">{t("noNewGuests")}</p>
           ) : (
             <ul className="space-y-3 text-sm">
               {guests.map((guest) => (
@@ -75,14 +78,12 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Members</CardTitle>
-          <CardDescription>
-            Participants and admins. Change roles or revoke access.
-          </CardDescription>
+          <CardTitle>{t("members")}</CardTitle>
+          <CardDescription>{t("membersDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           {!members.length ? (
-            <p className="text-sm text-muted-foreground">No members yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noMembers")}</p>
           ) : (
             <ul className="space-y-3 text-sm">
               {members.map((member) => (
@@ -112,16 +113,19 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All users</CardTitle>
+          <CardTitle>{t("allUsers")}</CardTitle>
           <CardDescription>
-            {allUsers.length} total · {members.filter((m) => m.role === "admin").length}{" "}
-            admins · {members.filter((m) => m.role === "participant").length}{" "}
-            participants · {guests.length} guests
+            {t("allUsersSummary", {
+              total: allUsers.length,
+              admins: members.filter((m) => m.role === "admin").length,
+              participants: members.filter((m) => m.role === "participant").length,
+              guests: guests.length,
+            })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!allUsers.length ? (
-            <p className="text-sm text-muted-foreground">No users yet.</p>
+            <p className="text-sm text-muted-foreground">{t("noUsers")}</p>
           ) : (
             <ul className="divide-y divide-foreground/10 text-sm">
               {allUsers.map((user) => (
@@ -134,12 +138,14 @@ export default async function AdminPage() {
                       {user.display_name}
                       {user.id === currentUserId && (
                         <span className="ml-1 text-xs text-muted-foreground">
-                          (you)
+                          {t("you")}
                         </span>
                       )}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      joined {dateFormatter.format(new Date(user.created_at))}
+                      {t("joined", {
+                        date: dateFormatter.format(new Date(user.created_at)),
+                      })}
                     </span>
                   </span>
                   <span className="shrink-0 text-xs text-muted-foreground">
@@ -154,23 +160,21 @@ export default async function AdminPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Data import</CardTitle>
-          <CardDescription>
-            Load schedule and squads from external sources.
-          </CardDescription>
+          <CardTitle>{t("dataImport")}</CardTitle>
+          <CardDescription>{t("dataImportDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1 text-sm text-muted-foreground">
           <p>
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
               pnpm import:schedule
             </code>{" "}
-            — schedule (OpenFootball)
+            {t("importSchedule")}
           </p>
           <p>
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
               pnpm import:squads
             </code>{" "}
-            — squads (Wikipedia)
+            {t("importSquads")}
           </p>
         </CardContent>
       </Card>

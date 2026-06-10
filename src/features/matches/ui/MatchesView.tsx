@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { buildGroupStandings } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
@@ -27,10 +28,12 @@ import {
   type MatchDayBucket,
 } from "@/shared/lib/formatDate";
 import { formatMatchScore } from "@/shared/lib/formatMatchScore";
+import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowDown01Icon, ArrowUp01Icon } from "@hugeicons/core-free-icons";
+import type { Locale } from "@/shared/types/database";
 
 interface MatchesViewProps {
   matches: Match[];
@@ -44,17 +47,7 @@ interface MatchesViewProps {
   canSeePlayerNames: boolean;
 }
 
-const TABS: { key: MatchDayBucket; label: string }[] = [
-  { key: "past", label: "Past" },
-  { key: "upcoming3days", label: "Next 3 days" },
-  { key: "future", label: "Future" },
-];
-
-const EMPTY_TAB_DESCRIPTION: Record<MatchDayBucket, string> = {
-  past: "Nothing in past games.",
-  upcoming3days: "Nothing in the next 3 days.",
-  future: "Nothing scheduled further out.",
-};
+const TAB_KEYS: MatchDayBucket[] = ["past", "upcoming3days", "future"];
 
 const FLAG_SIZE = 28;
 const MATCH_CARD_MIN_H = "min-h-[7rem]";
@@ -86,13 +79,19 @@ function toggleCollapsed(
   return next;
 }
 
-function MatchTimeBadge({ kickoffAt }: { kickoffAt: string }) {
+function MatchTimeBadge({
+  kickoffAt,
+  locale,
+}: {
+  kickoffAt: string;
+  locale: Locale;
+}) {
   return (
     <Badge
       variant="secondary"
       className="h-4 shrink-0 rounded-md border-0 bg-white/10 px-1.5 text-[10px] font-medium text-foreground tabular-nums"
     >
-      {formatMatchTime(kickoffAt)}
+      {formatMatchTime(kickoffAt, locale)}
     </Badge>
   );
 }
@@ -108,6 +107,8 @@ function MatchCenterFocus({
   awayTeamName,
   points,
   liveMinute,
+  outcomeMessages,
+  t,
 }: {
   prediction: PredictionDetail | undefined;
   locked: boolean;
@@ -119,6 +120,8 @@ function MatchCenterFocus({
   awayTeamName: string;
   points: number | null;
   liveMinute: string | null;
+  outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   if (finished) {
     return (
@@ -133,11 +136,13 @@ function MatchCenterFocus({
               points && points > 0 ? "text-emerald-300" : "text-muted-foreground",
             )}
           >
-            {points && points > 0 ? `+${points} pts` : `${points ?? 0} pts`}
+            {points && points > 0
+              ? t("ptsPositive", { count: points })
+              : t("pts", { count: points ?? 0 })}
           </span>
         ) : (
           <span className="text-center text-[11px] font-medium leading-none text-muted-foreground">
-            {locked ? "Missed" : "No pick"}
+            {locked ? t("missed") : t("noPick")}
           </span>
         )}
       </div>
@@ -153,18 +158,21 @@ function MatchCenterFocus({
               prediction.outcome,
               homeTeamName,
               awayTeamName,
+              outcomeMessages,
             )}
           </p>
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
-            My pick
+            {t("myPick")}
           </span>
         </>
       ) : locked ? (
         <p className="text-center text-[13px] font-medium text-muted-foreground">
-          Missed
+          {t("missed")}
         </p>
       ) : (
-        <p className="text-center text-[13px] font-medium text-red-300">No pick</p>
+        <p className="text-center text-[13px] font-medium text-red-300">
+          {t("noPick")}
+        </p>
       )}
 
       {live && (
@@ -173,7 +181,7 @@ function MatchCenterFocus({
             {formatMatchScore(homeScore, awayScore)}
           </p>
           <span className="text-[9px] font-semibold uppercase tracking-wide text-red-300">
-            {liveMinute ? `Live ${liveMinute}` : "Live"}
+            {liveMinute ? t("liveMinute", { minute: liveMinute }) : t("live")}
           </span>
         </div>
       )}
@@ -181,15 +189,21 @@ function MatchCenterFocus({
   );
 }
 
-function formatMatchSubtitle(match: Match): string {
+function formatMatchSubtitle(
+  match: Match,
+  t: ReturnType<typeof useTranslations<"matches">>,
+): string {
   if (match.round_key.startsWith("group_")) {
     return match.match_number != null
-      ? `Group Stage · Match ${match.match_number}`
-      : "Group Stage";
+      ? t("groupStageMatch", { number: match.match_number })
+      : t("groupStage");
   }
 
   if (match.match_number != null) {
-    return `${match.round_display} · Match ${match.match_number}`;
+    return t("roundMatch", {
+      round: match.round_display,
+      number: match.match_number,
+    });
   }
 
   return match.round_display;
@@ -206,6 +220,14 @@ export function MatchesView({
   canPredict,
   canSeePlayerNames,
 }: MatchesViewProps) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("matches");
+  const tOutcome = useTranslations("match.outcome");
+  const outcomeMessages = useMemo(
+    () => createOutcomeMessages(tOutcome),
+    [tOutcome],
+  );
+
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
 
   useLiveRefresh("matches-live", "matches", "predictions", "match_events");
@@ -214,6 +236,18 @@ export function MatchesView({
     getDefaultTab(matches),
   );
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+
+  const tabLabels: Record<MatchDayBucket, string> = {
+    past: t("tabPast"),
+    upcoming3days: t("tabUpcoming3days"),
+    future: t("tabFuture"),
+  };
+
+  const emptyDescriptions: Record<MatchDayBucket, string> = {
+    past: t("emptyPast"),
+    upcoming3days: t("emptyUpcoming3days"),
+    future: t("emptyFuture"),
+  };
 
   const filteredMatches = useMemo(
     () =>
@@ -290,42 +324,41 @@ export function MatchesView({
 
   return (
     <div className="flex flex-col animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
-      <div className="sports-panel corner-squircle sports-panel-max-h flex flex-col">
-        <div
-          className="flex shrink-0 border-b border-white/[0.08] px-3 pt-3 pb-2.5"
-          role="tablist"
-          aria-label="Match schedule"
-        >
-          {TABS.map((tab) => {
-            const isActive = activeTab === tab.key;
+      <div
+        className="sports-panel corner-squircle sticky top-0 z-20 flex shrink-0 px-3 py-2.5"
+        role="tablist"
+        aria-label={t("scheduleTabs")}
+      >
+        {TAB_KEYS.map((tabKey) => {
+          const isActive = activeTab === tabKey;
 
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => handleTabChange(tab.key)}
-                className={cn(
-                  "flex-1 px-0.5 py-1 text-center text-[15px] leading-none whitespace-nowrap transition-colors",
-                  isActive
-                    ? "font-semibold text-foreground"
-                    : "font-normal text-white/40 hover:text-white/55",
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
+          return (
+            <button
+              key={tabKey}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => handleTabChange(tabKey)}
+              className={cn(
+                "flex-1 px-0.5 py-1 text-center text-[15px] leading-none whitespace-nowrap transition-colors",
+                isActive
+                  ? "font-semibold text-foreground"
+                  : "font-normal text-white/40 hover:text-white/55",
+              )}
+            >
+              {tabLabels[tabKey]}
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="overflow-y-auto overscroll-contain">
+      <div className="sports-panel corner-squircle mt-3 flex flex-col">
         {groupedByDate.length === 0 ? (
           <Empty className="border-0 py-8">
             <EmptyHeader>
-              <EmptyTitle>No matches</EmptyTitle>
+              <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
               <EmptyDescription>
-                {EMPTY_TAB_DESCRIPTION[activeTab]}
+                {emptyDescriptions[activeTab]}
               </EmptyDescription>
             </EmptyHeader>
           </Empty>
@@ -346,7 +379,9 @@ export function MatchesView({
                   )}
                   aria-expanded={!isCollapsed}
                 >
-                  <span>{formatMatchDateHeader(dayMatches[0].kickoff_at)}</span>
+                  <span>
+                    {formatMatchDateHeader(dayMatches[0].kickoff_at, locale)}
+                  </span>
                   {groupIndex > 0 && (
                     <HugeiconsIcon
                       icon={isCollapsed ? ArrowDown01Icon : ArrowUp01Icon}
@@ -393,11 +428,11 @@ export function MatchesView({
                           </div>
 
                           <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
-                            {formatMatchSubtitle(match)}
+                            {formatMatchSubtitle(match, t)}
                           </p>
 
                           <div className="flex min-w-0 items-center justify-end">
-                            <MatchTimeBadge kickoffAt={match.kickoff_at} />
+                            <MatchTimeBadge kickoffAt={match.kickoff_at} locale={locale} />
                           </div>
                         </div>
 
@@ -420,6 +455,8 @@ export function MatchesView({
                             awayTeamName={match.away_team_name}
                             points={points}
                             liveMinute={liveMinute}
+                            outcomeMessages={outcomeMessages}
+                            t={t}
                           />
 
                           <div className="col-start-3 row-start-1 flex justify-center">
@@ -444,7 +481,6 @@ export function MatchesView({
             );
           })
         )}
-        </div>
       </div>
 
       <GroupStandingsList groups={groupStandings} />

@@ -3,9 +3,13 @@
 import { createHmac } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { parse, validate } from "@tma.js/init-data-node";
+import { normalizeLocale } from "@/i18n/config";
 import { createAdminClient } from "@/shared/lib/supabase/admin";
 import { createClient } from "@/shared/lib/supabase/server";
+import { setLocaleCookie } from "@/shared/lib/locale-cookie";
+import type { Locale } from "@/shared/types/database";
 
 const DEFAULT_DEV_TELEGRAM_ID = 169900085;
 
@@ -42,21 +46,25 @@ type TelegramUserLike = {
   last_name?: string;
   username?: string;
   photo_url?: string;
+  language_code?: string;
 };
 
 async function ensureTelegramUserAndSignIn(
   tgUser: TelegramUserLike,
   timezone?: string,
 ): Promise<{ error?: string }> {
+  const t = await getTranslations("common.errors");
+
   const pepper = getEnv("TELEGRAM_AUTH_PEPPER");
   if (!pepper) {
-    return { error: "Missing TELEGRAM_AUTH_PEPPER in server config" };
+    return { error: t("missingAuthPepper") };
   }
 
   const email = telegramEmail(tgUser.id);
   const password = derivePassword(tgUser.id, pepper);
   const displayName = buildDisplayName(tgUser);
   const photoUrl = tgUser.photo_url ?? null;
+  const detectedLocale = normalizeLocale(tgUser.language_code);
 
   const admin = createAdminClient();
   const metadata = {
@@ -67,11 +75,15 @@ async function ensureTelegramUserAndSignIn(
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("id, display_name_custom, avatar_custom")
+    .select("id, display_name_custom, avatar_custom, locale, locale_custom")
     .eq("telegram_id", tgUser.id)
     .maybeSingle();
 
+  let resolvedLocale: Locale = detectedLocale;
+
   if (profile) {
+    resolvedLocale = profile.locale_custom ? profile.locale : detectedLocale;
+
     const { error: updateError } = await admin.auth.admin.updateUserById(
       profile.id,
       {
@@ -89,6 +101,7 @@ async function ensureTelegramUserAndSignIn(
       display_name?: string;
       photo_url?: string | null;
       timezone?: string;
+      locale?: Locale;
     } = {};
 
     if (!profile.display_name_custom) {
@@ -99,6 +112,10 @@ async function ensureTelegramUserAndSignIn(
     }
     if (timezone) {
       profileUpdate.timezone = timezone;
+    }
+    if (!profile.locale_custom) {
+      profileUpdate.locale = detectedLocale;
+      resolvedLocale = detectedLocale;
     }
 
     if (Object.keys(profileUpdate).length > 0) {
@@ -113,12 +130,19 @@ async function ensureTelegramUserAndSignIn(
     });
     if (createError) return { error: createError.message };
 
+    const profileUpdate: {
+      timezone?: string;
+      locale?: Locale;
+    } = { locale: detectedLocale };
+
     if (timezone) {
-      await admin
-        .from("profiles")
-        .update({ timezone })
-        .eq("telegram_id", tgUser.id);
+      profileUpdate.timezone = timezone;
     }
+
+    await admin
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("telegram_id", tgUser.id);
   }
 
   const supabase = await createClient();
@@ -128,6 +152,8 @@ async function ensureTelegramUserAndSignIn(
   });
   if (signInError) return { error: signInError.message };
 
+  await setLocaleCookie(resolvedLocale);
+
   revalidatePath("/", "layout");
   redirect("/matches");
 }
@@ -136,25 +162,29 @@ export async function signInWithTelegram(
   initDataRaw: string,
   timezone?: string,
 ): Promise<{ error?: string }> {
+  const t = await getTranslations("common.errors");
+
   if (!initDataRaw) {
-    return { error: "Missing Telegram init data" };
+    return { error: t("missingTelegramInitData") };
   }
 
   const botToken = getEnv("TELEGRAM_BOT_TOKEN");
   if (!botToken) {
-    return { error: "Missing TELEGRAM_BOT_TOKEN in server config" };
+    return { error: t("missingBotToken") };
   }
 
   try {
     validate(initDataRaw, botToken, { expiresIn: 3600 });
   } catch (e) {
-    return { error: e instanceof Error ? e.message : "Invalid Telegram data" };
+    return {
+      error: e instanceof Error ? e.message : t("invalidTelegramData"),
+    };
   }
 
   const initData = parse(initDataRaw);
   const tgUser = initData.user;
   if (!tgUser) {
-    return { error: "Telegram user not found in init data" };
+    return { error: t("telegramUserNotFound") };
   }
 
   return ensureTelegramUserAndSignIn(tgUser, timezone);
@@ -163,15 +193,17 @@ export async function signInWithTelegram(
 export async function signInWithDevBypass(
   timezone?: string,
 ): Promise<{ error?: string }> {
+  const t = await getTranslations("common.errors");
+
   if (process.env.NODE_ENV !== "development") {
-    return { error: "outside_telegram" };
+    return { error: t("outsideTelegram") };
   }
 
   const telegramId = Number(
     process.env.DEV_TELEGRAM_ID ?? DEFAULT_DEV_TELEGRAM_ID,
   );
   if (!Number.isFinite(telegramId)) {
-    return { error: "Invalid DEV_TELEGRAM_ID" };
+    return { error: t("invalidDevTelegramId") };
   }
 
   const admin = createAdminClient();

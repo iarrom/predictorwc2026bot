@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId, isAdmin } from "@/shared/lib/auth";
@@ -14,10 +15,12 @@ export async function updateUserRole(
   _prev: { error?: string; success?: boolean } | null,
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
-  if (!(await isAdmin())) return { error: "Forbidden" };
+  const t = await getTranslations("common.errors");
+
+  if (!(await isAdmin())) return { error: t("forbidden") };
 
   const currentUserId = await getCurrentUserId();
-  if (!currentUserId) return { error: "Not authenticated" };
+  if (!currentUserId) return { error: t("notAuthenticated") };
 
   const parsed = updateRoleSchema.safeParse({
     user_id: formData.get("user_id"),
@@ -25,13 +28,13 @@ export async function updateUserRole(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? t("invalidInput") };
   }
 
   const { user_id, role } = parsed.data;
 
   if (user_id === currentUserId && role !== "admin") {
-    return { error: "You can't change your own admin role" };
+    return { error: t("cantChangeOwnAdminRole") };
   }
 
   const supabase = await createClient();

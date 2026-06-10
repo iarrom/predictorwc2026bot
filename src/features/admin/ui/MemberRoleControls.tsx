@@ -1,15 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useTranslations } from "next-intl";
 import type { UserRole } from "@/shared/types/database";
 import { updateUserRole } from "@/features/admin/actions";
 import { Button } from "@/components/ui/button";
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  guest: "Guest",
-  participant: "Participant",
-  admin: "Admin",
-};
 
 interface MemberRoleControlsProps {
   userId: string;
@@ -22,8 +17,16 @@ export function MemberRoleControls({
   currentRole,
   isSelf,
 }: MemberRoleControlsProps) {
+  const t = useTranslations("admin.roles");
+  const tCommon = useTranslations("common");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const roleLabels: Record<UserRole, string> = {
+    guest: t("guest"),
+    participant: t("participant"),
+    admin: t("admin"),
+  };
 
   const targets = (["guest", "participant", "admin"] as UserRole[]).filter(
     (role) => {
@@ -36,7 +39,7 @@ export function MemberRoleControls({
   if (!targets.length) {
     return (
       <span className="text-xs text-muted-foreground">
-        {isSelf ? "You" : ROLE_LABELS[currentRole]}
+        {isSelf ? tCommon("you") : roleLabels[currentRole]}
       </span>
     );
   }
@@ -64,7 +67,7 @@ export function MemberRoleControls({
             disabled={pending}
             onClick={() => setRole(role)}
           >
-            {ROLE_LABELS[role]}
+            {roleLabels[role]}
           </Button>
         ))}
       </div>

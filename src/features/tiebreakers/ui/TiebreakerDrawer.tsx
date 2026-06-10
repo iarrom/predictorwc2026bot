@@ -1,9 +1,12 @@
 "use client";
 
+import { useMemo } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import type { TiebreakerRoundState } from "@/entities/tiebreaker/model/types";
 import { formatTiebreakerDeadline } from "@/features/tiebreakers/lib/formatDeadline";
 import { formatTiebreakerMatchCount } from "@/features/tiebreakers/lib/formatMatchCount";
 import { TiebreakerForm } from "@/features/tiebreakers/ui/TiebreakerForm";
+import type { Locale } from "@/shared/types/database";
 import {
   Drawer,
   DrawerContent,
@@ -25,7 +28,18 @@ export function TiebreakerDrawer({
   onClose,
   onSaved,
 }: TiebreakerDrawerProps) {
+  const locale = useLocale() as Locale;
+  const t = useTranslations("tiebreaker");
   const open = Boolean(round);
+
+  const matchCountMessages = useMemo(
+    () => ({
+      none: t("matchCount.none"),
+      one: (count: number) => t("matchCount.one", { count }),
+      other: (count: number) => t("matchCount.other", { count }),
+    }),
+    [t],
+  );
 
   return (
     <Drawer
@@ -42,17 +56,25 @@ export function TiebreakerDrawer({
         {round && (
           <div className="flex min-h-0 flex-1 flex-col px-4 pb-6 pt-2">
             <DrawerHeader className="px-0 pb-4 pt-0 text-left">
-              <DrawerTitle>{round.label}</DrawerTitle>
+              <DrawerTitle>{t(`rounds.${round.roundKey}`)}</DrawerTitle>
               <DrawerDescription className="space-y-1">
                 <span className="block">
-                  {formatTiebreakerMatchCount(round.matchCount)}
+                  {formatTiebreakerMatchCount(
+                    round.matchCount,
+                    matchCountMessages,
+                  )}
                 </span>
                 <span className="block">
                   {round.locked
-                    ? "Locked after the first match in this round."
+                    ? t("drawerLocked")
                     : round.deadlineAt
-                      ? `Open until ${formatTiebreakerDeadline(round.deadlineAt)}`
-                      : "No matches scheduled for this round yet."}
+                      ? t("drawerOpenUntil", {
+                          deadline: formatTiebreakerDeadline(
+                            round.deadlineAt,
+                            locale,
+                          ),
+                        })
+                      : t("drawerNoMatches")}
                 </span>
               </DrawerDescription>
             </DrawerHeader>

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId, isParticipant } from "@/shared/lib/auth";
@@ -15,11 +16,12 @@ export async function savePrediction(
   _prev: { error?: string } | null,
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
+  const t = await getTranslations("common.errors");
   const userId = await getCurrentUserId();
-  if (!userId) return { error: "Not authenticated" };
+  if (!userId) return { error: t("notAuthenticated") };
 
   if (!(await isParticipant())) {
-    return { error: "Voting is available after an admin approves your account." };
+    return { error: t("votingRequiresApproval") };
   }
 
   const parsed = predictionSchema.safeParse({
@@ -28,7 +30,7 @@ export async function savePrediction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+    return { error: parsed.error.issues[0]?.message ?? t("invalidInput") };
   }
 
   const supabase = await createClient();
@@ -40,9 +42,9 @@ export async function savePrediction(
     .eq("id", match_id)
     .single();
 
-  if (matchError || !match) return { error: "Match not found" };
+  if (matchError || !match) return { error: t("matchNotFound") };
   if (new Date(match.kickoff_at) <= new Date()) {
-    return { error: "Predictions are locked after kickoff" };
+    return { error: t("predictionsLocked") };
   }
 
   const outcomeEncrypted = encryptOutcome(outcome, {

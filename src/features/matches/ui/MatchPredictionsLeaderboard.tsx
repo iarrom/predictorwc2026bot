@@ -1,10 +1,13 @@
 "use client";
 
+import { useMemo } from "react";
+import { useTranslations } from "next-intl";
 import type { Match } from "@/entities/match/model/types";
 import { projectPredictionPoints } from "@/entities/prediction/lib/scoring";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import { getInitials } from "@/features/matches/lib/voterInfo";
+import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -46,6 +49,14 @@ export function MatchPredictionsLeaderboard({
   currentUserId,
   canSeePlayerNames = true,
 }: MatchPredictionsLeaderboardProps) {
+  const t = useTranslations("matches");
+  const tCommon = useTranslations("common");
+  const tOutcome = useTranslations("match.outcome");
+  const outcomeMessages = useMemo(
+    () => createOutcomeMessages(tOutcome),
+    [tOutcome],
+  );
+
   const ranked = [...predictions]
     .map((entry) => ({
       entry,
@@ -56,19 +67,19 @@ export function MatchPredictionsLeaderboard({
   if (ranked.length === 0) {
     return (
       <p className="text-center text-sm text-muted-foreground">
-        No predictions yet.
+        {t("noPredictionsYet")}
       </p>
     );
   }
 
   const pointsLabel =
-    match.status === "live" ? "Pts (live)" : "Points";
+    match.status === "live" ? t("ptsLive") : t("points");
 
   return (
     <div className="flex flex-col gap-2">
       <div className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-x-3 px-1 text-[11px] font-medium text-white/50">
-        <span>Player</span>
-        <span>Pick</span>
+        <span>{t("player")}</span>
+        <span>{t("pick")}</span>
         <span className="text-right">{pointsLabel}</span>
       </div>
 
@@ -101,14 +112,14 @@ export function MatchPredictionsLeaderboard({
                     <p className="truncate text-sm font-medium text-white">
                       {canSeePlayerNames
                         ? entry.display_name
-                        : `Player ${rank}`}
+                        : t("playerRank", { rank })}
                     </p>
                     {canSeePlayerNames && isCurrentUser && (
                       <Badge
                         variant="secondary"
                         className="h-4 shrink-0 rounded-md px-1.5 text-[10px]"
                       >
-                        You
+                        {tCommon("you")}
                       </Badge>
                     )}
                   </div>
@@ -120,6 +131,7 @@ export function MatchPredictionsLeaderboard({
                   entry.outcome,
                   match.home_team_name,
                   match.away_team_name,
+                  outcomeMessages,
                 )}
               </p>
 
