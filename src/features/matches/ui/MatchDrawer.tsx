@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent,
+} from "react";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
@@ -73,8 +79,17 @@ export function MatchDrawer({
   const open = Boolean(matchId);
   const [contentMounted, setContentMounted] = useState(() => Boolean(matchId));
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
-  const [snap, setSnap] = useState<number | string>(EXPANDED_SNAP);
+  const [snap, setSnap] = useState<number | string>(COLLAPSED_SNAP);
+  const [frozenExpanded, setFrozenExpanded] = useState(false);
+  const isClosingRef = useRef(false);
+  const dragStartedExpandedRef = useRef(false);
+  const snapRef = useRef(snap);
   const expanded = snap === EXPANDED_SNAP;
+  const visualExpanded = expanded || frozenExpanded;
+
+  useEffect(() => {
+    snapRef.current = snap;
+  }, [snap]);
 
   const activeIndex = Math.max(
     0,
@@ -90,7 +105,10 @@ export function MatchDrawer({
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- lazy-mount drawer content after first open
       setContentMounted(true);
-      setSnap(EXPANDED_SNAP);
+      setSnap(COLLAPSED_SNAP);
+      setFrozenExpanded(false);
+      isClosingRef.current = false;
+      dragStartedExpandedRef.current = false;
     }
   }, [open]);
 
@@ -99,9 +117,17 @@ export function MatchDrawer({
   }, []);
 
   const handleSnapChange = useCallback((snapPoint: number | string | null) => {
-    if (snapPoint != null) {
-      setSnap(snapPoint);
+    if (isClosingRef.current || snapPoint == null) {
+      return;
     }
+    if (
+      dragStartedExpandedRef.current &&
+      snapPoint === COLLAPSED_SNAP &&
+      snapRef.current === EXPANDED_SNAP
+    ) {
+      return;
+    }
+    setSnap(snapPoint);
   }, []);
 
   useEffect(() => {
@@ -148,22 +174,57 @@ export function MatchDrawer({
   }, [carouselApi, matchId, matches, onMatchChange]);
 
   useEffect(() => {
-    if (!carouselApi) {
+    if (!carouselApi || frozenExpanded) {
       return;
     }
     // Slide widths change between carousel (90%) and full-screen (100%) modes.
     carouselApi.reInit();
     carouselApi.scrollTo(carouselApi.selectedScrollSnap(), true);
-  }, [carouselApi, expanded]);
+  }, [carouselApi, visualExpanded, frozenExpanded]);
+
+  const handleDrag = useCallback(
+    (_event: PointerEvent<HTMLDivElement>, percentageDragged: number) => {
+      if (percentageDragged > 0 && snapRef.current === EXPANDED_SNAP) {
+        dragStartedExpandedRef.current = true;
+      }
+    },
+    [],
+  );
+
+  const handleRelease = useCallback(
+    (_event: PointerEvent<HTMLDivElement>, willStayOpen: boolean) => {
+      if (dragStartedExpandedRef.current) {
+        if (!willStayOpen) {
+          isClosingRef.current = true;
+          setFrozenExpanded(true);
+        } else {
+          setSnap(COLLAPSED_SNAP);
+        }
+      }
+      dragStartedExpandedRef.current = false;
+    },
+    [],
+  );
 
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen) {
+        isClosingRef.current = true;
+        if (snapRef.current === EXPANDED_SNAP) {
+          setFrozenExpanded(true);
+        }
         onClose();
       }
     },
     [onClose],
   );
+
+  const handleAnimationEnd = useCallback(() => {
+    isClosingRef.current = false;
+    dragStartedExpandedRef.current = false;
+    setFrozenExpanded(false);
+    setSnap(COLLAPSED_SNAP);
+  }, []);
 
   if (matches.length === 0) {
     return null;
@@ -173,6 +234,9 @@ export function MatchDrawer({
     <Drawer
       open={open}
       onOpenChange={handleOpenChange}
+      onDrag={handleDrag}
+      onRelease={handleRelease}
+      onAnimationEnd={handleAnimationEnd}
       modal
       shouldScaleBackground={false}
       snapPoints={[...SNAP_POINTS]}
@@ -189,7 +253,7 @@ export function MatchDrawer({
           <div
             className={cn(
               "flex h-full min-h-0 flex-col",
-              expanded ? "pt-0" : "pt-6",
+              visualExpanded ? "pt-0" : "pt-6",
             )}
           >
             <Carousel
@@ -212,7 +276,7 @@ export function MatchDrawer({
                     key={match.id}
                     className={cn(
                       "flex h-full",
-                      expanded ? "basis-full px-0" : "basis-[90%] px-1",
+                      visualExpanded ? "basis-full px-0" : "basis-[90%] px-1",
                     )}
                   >
                     <MatchDrawerSlide
@@ -228,7 +292,7 @@ export function MatchDrawer({
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}
                       distanceFromActive={Math.abs(index - snapIndex)}
-                      expanded={expanded}
+                      expanded={visualExpanded}
                       onRequestExpand={handleRequestExpand}
                     />
                   </CarouselItem>
