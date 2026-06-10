@@ -22,6 +22,9 @@ export interface Database {
           telegram_id: number | null;
           photo_url: string | null;
           timezone: string | null;
+          notify_goals: boolean;
+          display_name_custom: boolean;
+          avatar_custom: boolean;
           role: UserRole;
           created_at: string;
           updated_at: string;
@@ -32,6 +35,9 @@ export interface Database {
           telegram_id?: number | null;
           photo_url?: string | null;
           timezone?: string | null;
+          notify_goals?: boolean;
+          display_name_custom?: boolean;
+          avatar_custom?: boolean;
           role?: UserRole;
           created_at?: string;
           updated_at?: string;
@@ -125,6 +131,7 @@ export interface Database {
           score_home: number | null;
           score_away: number | null;
           payload: Record<string, unknown> | null;
+          notified_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -140,6 +147,7 @@ export interface Database {
           score_home?: number | null;
           score_away?: number | null;
           payload?: Record<string, unknown> | null;
+          notified_at?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["match_events"]["Insert"]>;

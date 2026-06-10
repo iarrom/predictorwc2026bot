@@ -1,5 +1,6 @@
 import { getInitials } from "@/features/matches/lib/voterInfo";
 import { canSeePlayerNames } from "@/shared/lib/auth";
+import { LEADERBOARD_EXCLUDED_TELEGRAM_IDS } from "@/shared/lib/leaderboard";
 import { createClient } from "@/shared/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -39,6 +40,15 @@ export default async function LeaderboardPage() {
     .order("total_points", { ascending: false })
     .order("predictions_count", { ascending: false });
 
+  const { data: excludedProfiles } = await supabase
+    .from("profiles")
+    .select("id")
+    .in("telegram_id", [...LEADERBOARD_EXCLUDED_TELEGRAM_IDS]);
+
+  const excludedUserIds = new Set(
+    (excludedProfiles ?? []).map((profile) => profile.id),
+  );
+
   const photoMap = new Map<string, string | null>();
 
   if (showNames) {
@@ -51,10 +61,12 @@ export default async function LeaderboardPage() {
     }
   }
 
-  const entries = (leaderboard ?? []).map((entry) => ({
-    ...entry,
-    photo_url: photoMap.get(entry.user_id) ?? null,
-  }));
+  const entries = (leaderboard ?? [])
+    .filter((entry) => !excludedUserIds.has(entry.user_id))
+    .map((entry) => ({
+      ...entry,
+      photo_url: photoMap.get(entry.user_id) ?? null,
+    }));
 
   return (
     <div className="flex flex-col animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">

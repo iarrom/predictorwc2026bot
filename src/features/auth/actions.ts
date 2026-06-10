@@ -67,27 +67,43 @@ async function ensureTelegramUserAndSignIn(
 
   const { data: profile } = await admin
     .from("profiles")
-    .select("id")
+    .select("id, display_name_custom, avatar_custom")
     .eq("telegram_id", tgUser.id)
     .maybeSingle();
 
   if (profile) {
     const { error: updateError } = await admin.auth.admin.updateUserById(
       profile.id,
-      { password, user_metadata: metadata },
+      {
+        password,
+        user_metadata: {
+          telegram_id: tgUser.id,
+          ...(profile.display_name_custom ? {} : { display_name: displayName }),
+          ...(profile.avatar_custom ? {} : { photo_url: photoUrl }),
+        },
+      },
     );
     if (updateError) return { error: updateError.message };
 
     const profileUpdate: {
-      display_name: string;
-      photo_url: string | null;
+      display_name?: string;
+      photo_url?: string | null;
       timezone?: string;
-    } = { display_name: displayName, photo_url: photoUrl };
+    } = {};
+
+    if (!profile.display_name_custom) {
+      profileUpdate.display_name = displayName;
+    }
+    if (!profile.avatar_custom) {
+      profileUpdate.photo_url = photoUrl;
+    }
     if (timezone) {
       profileUpdate.timezone = timezone;
     }
 
-    await admin.from("profiles").update(profileUpdate).eq("id", profile.id);
+    if (Object.keys(profileUpdate).length > 0) {
+      await admin.from("profiles").update(profileUpdate).eq("id", profile.id);
+    }
   } else {
     const { error: createError } = await admin.auth.admin.createUser({
       email,

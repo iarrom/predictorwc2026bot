@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   FootballIcon,
   RankingIcon,
+  Settings01Icon,
   ShieldIcon,
   Target02Icon,
 } from "@hugeicons/core-free-icons";
@@ -19,6 +20,7 @@ const tabs = [
   { href: "/matches", label: "Matches", icon: FootballIcon },
   { href: "/tiebreaker", label: "Tie-break", icon: Target02Icon },
   { href: "/leaderboard", label: "Leaderboard", icon: RankingIcon },
+  { href: "/settings", label: "Settings", icon: Settings01Icon },
 ] as const;
 
 export function BottomTabBar({ isAdmin }: BottomTabBarProps) {

@@ -10,6 +10,11 @@ const projectRoot = path.dirname(
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["wcbot.localhost", "*.wcbot.localhost"],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
   turbopack: {
     root: projectRoot,
   },
