@@ -20,6 +20,10 @@ import {
 } from "@/components/ui/drawer";
 
 const PRELOAD_RADIUS = 2;
+// First snap reveals header + prediction + tab bar; second is full-screen scroll.
+const COLLAPSED_SNAP = 0.72;
+const EXPANDED_SNAP = 1;
+const SNAP_POINTS = [COLLAPSED_SNAP, EXPANDED_SNAP] as const;
 
 function expandMountedIndices(
   indices: Set<number>,
@@ -68,6 +72,8 @@ export function MatchDrawer({
   const open = Boolean(matchId);
   const [contentMounted, setContentMounted] = useState(() => Boolean(matchId));
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
+  const [snap, setSnap] = useState<number | string>(COLLAPSED_SNAP);
+  const expanded = snap === EXPANDED_SNAP;
 
   const activeIndex = Math.max(
     0,
@@ -83,8 +89,19 @@ export function MatchDrawer({
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- lazy-mount drawer content after first open
       setContentMounted(true);
+      setSnap(COLLAPSED_SNAP);
     }
   }, [open]);
+
+  const handleRequestExpand = useCallback(() => {
+    setSnap(EXPANDED_SNAP);
+  }, []);
+
+  const handleSnapChange = useCallback((snapPoint: number | string | null) => {
+    if (snapPoint != null) {
+      setSnap(snapPoint);
+    }
+  }, []);
 
   useEffect(() => {
     if (!carouselApi || !matchId) {
@@ -148,12 +165,15 @@ export function MatchDrawer({
       onOpenChange={handleOpenChange}
       modal
       shouldScaleBackground={false}
+      snapPoints={[...SNAP_POINTS]}
+      activeSnapPoint={snap}
+      setActiveSnapPoint={handleSnapChange}
     >
-      <DrawerContent className="mt-0 max-h-[92dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
+      <DrawerContent className="mt-0 h-[96dvh] max-h-[96dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
         <DrawerTitle className="sr-only">Match details</DrawerTitle>
 
         {contentMounted ? (
-          <div className="flex max-h-[inherit] flex-col overflow-hidden pt-8 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="flex h-full min-h-0 flex-col pt-6">
             <Carousel
               setApi={setCarouselApi}
               opts={{
@@ -163,16 +183,16 @@ export function MatchDrawer({
                 loop: false,
                 duration: 20,
               }}
-              className="w-full"
+              className="h-full min-h-0 w-full flex-1"
             >
               <CarouselContent
-                className="ml-0 items-stretch py-1"
+                className="ml-0 h-full items-stretch"
                 data-vaul-no-drag
               >
                 {matches.map((match, index) => (
                   <CarouselItem
                     key={match.id}
-                    className="flex basis-[90%] px-1"
+                    className="flex h-full basis-[90%] px-1"
                   >
                     <MatchDrawerSlide
                       match={match}
@@ -187,6 +207,8 @@ export function MatchDrawer({
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}
                       distanceFromActive={Math.abs(index - snapIndex)}
+                      expanded={expanded}
+                      onRequestExpand={handleRequestExpand}
                     />
                   </CarouselItem>
                 ))}

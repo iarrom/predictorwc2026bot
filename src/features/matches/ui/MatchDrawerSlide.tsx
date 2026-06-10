@@ -22,6 +22,8 @@ interface MatchDrawerSlideProps {
   isActive: boolean;
   isMounted: boolean;
   distanceFromActive: number;
+  expanded: boolean;
+  onRequestExpand: () => void;
 }
 
 export const MatchDrawerSlide = memo(function MatchDrawerSlide({
@@ -37,6 +39,8 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
   isActive,
   isMounted,
   distanceFromActive,
+  expanded,
+  onRequestExpand,
 }: MatchDrawerSlideProps) {
   const isNeighbor = distanceFromActive === 1;
 
@@ -68,6 +72,8 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
               : undefined
           }
           isActive={isActive}
+          expanded={expanded}
+          onRequestExpand={onRequestExpand}
         />
       ) : null}
     </div>

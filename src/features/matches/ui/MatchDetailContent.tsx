@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/tabs";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
+import { cn } from "@/lib/utils";
 
 interface MatchDetailContentProps {
   match: Match;
@@ -43,6 +44,8 @@ interface MatchDetailContentProps {
   canPredict?: boolean;
   isActive?: boolean;
   groupStanding?: GroupStanding;
+  expanded?: boolean;
+  onRequestExpand?: () => void;
 }
 
 const matchTabClassName =
@@ -137,6 +140,8 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   canPredict = false,
   isActive = true,
   groupStanding,
+  expanded = false,
+  onRequestExpand,
 }: MatchDetailContentProps) {
   const locked = new Date(match.kickoff_at) <= new Date();
   const live =
@@ -156,7 +161,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
       : "lineups";
 
   return (
-    <div className="match-drawer-card corner-squircle relative flex max-h-[calc(92dvh-5rem)] w-full flex-col">
+    <div className="match-drawer-card corner-squircle relative flex h-full w-full flex-col">
       <MatchTeamBackground
         homeTeamName={match.home_team_name}
         awayTeamName={match.away_team_name}
@@ -164,7 +169,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         animate={isActive}
       />
 
-      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-2">
+      <div
+        className={cn(
+          "relative flex min-h-0 flex-1 flex-col px-4 pt-2",
+          expanded
+            ? "overflow-y-auto overscroll-contain pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
+            : "overflow-hidden pb-4",
+        )}
+      >
         <section className="flex shrink-0 flex-col gap-2 pb-4">
           <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
             {formatMatchSubtitle(match)}
@@ -240,7 +252,15 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         </section>
 
         <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
-          <Tabs defaultValue={defaultMatchTab} className="flex flex-col gap-3">
+          <Tabs
+            defaultValue={defaultMatchTab}
+            onValueChange={() => {
+              if (!expanded) {
+                onRequestExpand?.();
+              }
+            }}
+            className="flex flex-col gap-3"
+          >
             <TabsList className="flex h-auto w-full shrink-0 bg-white/10 p-1 group-data-horizontal/tabs:h-auto">
               {groupStanding && (
                 <TabsTrigger value="standings" className={matchTabClassName}>
