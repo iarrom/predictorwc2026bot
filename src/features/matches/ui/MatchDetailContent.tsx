@@ -161,7 +161,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
       : "lineups";
 
   return (
-    <div className="match-drawer-card corner-squircle relative flex h-full w-full flex-col">
+    <div
+      className={cn(
+        "match-drawer-card corner-squircle relative flex h-full w-full flex-col",
+        expanded && "rounded-none border-0 shadow-none",
+      )}
+    >
       <MatchTeamBackground
         homeTeamName={match.home_team_name}
         awayTeamName={match.away_team_name}
@@ -171,10 +176,10 @@ export const MatchDetailContent = memo(function MatchDetailContent({
 
       <div
         className={cn(
-          "relative flex min-h-0 flex-1 flex-col px-4 pt-2",
+          "relative flex min-h-0 flex-1 flex-col px-4",
           expanded
-            ? "overflow-y-auto overscroll-contain pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
-            : "overflow-hidden pb-4",
+            ? "overflow-y-auto overscroll-contain pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
+            : "overflow-hidden pb-4 pt-2",
         )}
       >
         <section className="flex shrink-0 flex-col gap-2 pb-4">

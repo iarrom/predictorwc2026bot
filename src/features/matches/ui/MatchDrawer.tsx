@@ -18,6 +18,7 @@ import {
   DrawerContent,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { cn } from "@/lib/utils";
 
 const PRELOAD_RADIUS = 2;
 // First snap reveals header + prediction + tab bar; second is full-screen scroll.
@@ -146,6 +147,15 @@ export function MatchDrawer({
     };
   }, [carouselApi, matchId, matches, onMatchChange]);
 
+  useEffect(() => {
+    if (!carouselApi) {
+      return;
+    }
+    // Slide widths change between carousel (90%) and full-screen (100%) modes.
+    carouselApi.reInit();
+    carouselApi.scrollTo(carouselApi.selectedScrollSnap(), true);
+  }, [carouselApi, expanded]);
+
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
       if (!nextOpen) {
@@ -169,11 +179,16 @@ export function MatchDrawer({
       activeSnapPoint={snap}
       setActiveSnapPoint={handleSnapChange}
     >
-      <DrawerContent className="mt-0 h-[96dvh] max-h-[96dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
+      <DrawerContent className="mt-0 h-[100dvh] max-h-[100dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
         <DrawerTitle className="sr-only">Match details</DrawerTitle>
 
         {contentMounted ? (
-          <div className="flex h-full min-h-0 flex-col pt-6">
+          <div
+            className={cn(
+              "flex h-full min-h-0 flex-col",
+              expanded ? "pt-0" : "pt-6",
+            )}
+          >
             <Carousel
               setApi={setCarouselApi}
               opts={{
@@ -189,7 +204,10 @@ export function MatchDrawer({
                 {matches.map((match, index) => (
                   <CarouselItem
                     key={match.id}
-                    className="flex h-full basis-[90%] px-1"
+                    className={cn(
+                      "flex h-full",
+                      expanded ? "basis-full px-0" : "basis-[90%] px-1",
+                    )}
                   >
                     <MatchDrawerSlide
                       match={match}
