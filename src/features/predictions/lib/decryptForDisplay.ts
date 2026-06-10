@@ -5,6 +5,15 @@ export function decryptPredictionForDisplay(
   outcomeEncrypted: string,
   userId: string,
   matchId: string,
-): PredictionOutcome {
-  return decryptOutcome(outcomeEncrypted, { userId, matchId });
+): PredictionOutcome | null {
+  try {
+    return decryptOutcome(outcomeEncrypted, { userId, matchId });
+  } catch (error) {
+    console.error("Failed to decrypt prediction for display", {
+      userId,
+      matchId,
+      error,
+    });
+    return null;
+  }
 }

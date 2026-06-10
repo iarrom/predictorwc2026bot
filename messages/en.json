@@ -151,18 +151,50 @@
       "none": "No matches scheduled",
       "one": "{count} match",
       "other": "{count} matches"
+    },
+    "standings": {
+      "title": "Tie-break standings",
+      "description": "Deviation from actual total goals per round. Lower is better.",
+      "previewDescription": "Compare how close everyone's predictions are to the actual goal totals.",
+      "previewHint": "Opens after the first matchday starts.",
+      "name": "Name",
+      "overall": "Overall",
+      "real": "Real",
+      "playerRank": "Player #{rank}",
+      "empty": "No players yet."
     }
   },
   "leaderboard": {
     "title": "Leaderboard",
-    "description": "Rankings by points earned from correct outcome predictions",
+    "description": "Rankings by points; tie-break by total goals deviation when tied",
     "noPlayers": "No players yet.",
     "player": "Player",
     "points": "Points",
     "picks": "Picks",
+    "tiebreak": "Tie-break",
     "rank1": "1st place",
     "rank2": "2nd place",
-    "rank3": "3rd place"
+    "rank3": "3rd place",
+    "tabOverall": "Overall",
+    "tabStages": "By stage",
+    "tabChart": "Trend",
+    "stagePoints": "Pts",
+    "stagePicks": "Picks",
+    "noStagesYet": "No finished stages yet.",
+    "previewHint": "Preview — rankings update when a stage finishes.",
+    "noStagePicks": "No picks in this stage yet.",
+    "chartDescription": "Position after each stage (lower is better). Scroll sideways on small screens.",
+    "positionAxis": "Rank",
+    "you": "You",
+    "stages": {
+      "groupMatchday": "MD {number}",
+      "roundOf32": "R32",
+      "roundOf16": "R16",
+      "quarterFinal": "QF",
+      "semiFinal": "SF",
+      "thirdPlace": "3rd",
+      "final": "Final"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -239,5 +271,10 @@
       "sendFailed": "Failed to send Telegram message",
       "noPending": "No participants without a pick"
     }
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "description": "Please reload the app and try again.",
+    "reload": "Reload"
   }
 }

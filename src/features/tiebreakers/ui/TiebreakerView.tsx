@@ -5,15 +5,20 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { useLiveRefresh } from "@/shared/lib/supabase/useLiveRefresh";
 import type { TiebreakerRoundState } from "@/entities/tiebreaker/model/types";
+import type { TiebreakerStandingsResult } from "@/entities/tiebreaker/lib/standings";
 import { formatTiebreakerDeadline } from "@/features/tiebreakers/lib/formatDeadline";
 import { formatTiebreakerMatchCount } from "@/features/tiebreakers/lib/formatMatchCount";
 import { TiebreakerDrawer } from "@/features/tiebreakers/ui/TiebreakerDrawer";
+import { TiebreakerStandings } from "@/features/tiebreakers/ui/TiebreakerStandings";
 import type { Locale } from "@/shared/types/database";
 import { cn } from "@/lib/utils";
 
 interface TiebreakerViewProps {
   rounds: TiebreakerRoundState[];
   canEdit: boolean;
+  standings: TiebreakerStandingsResult;
+  showPlayerNames: boolean;
+  currentUserId: string | null;
 }
 
 function RoundStatus({
@@ -50,13 +55,20 @@ function RoundStatus({
   );
 }
 
-export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
+export function TiebreakerView({
+  rounds,
+  canEdit,
+  standings,
+  showPlayerNames,
+  currentUserId,
+}: TiebreakerViewProps) {
   const router = useRouter();
   const locale = useLocale() as Locale;
   const t = useTranslations("tiebreaker");
   const [activeRoundKey, setActiveRoundKey] = useState<string | null>(null);
 
   useLiveRefresh("tiebreaker-live", "tiebreakers");
+  useLiveRefresh("tiebreaker-matches-live", "matches");
 
   const matchCountMessages = useMemo(
     () => ({
@@ -125,6 +137,12 @@ export function TiebreakerView({ rounds, canEdit }: TiebreakerViewProps) {
             })}
           </div>
         </div>
+
+        <TiebreakerStandings
+          standings={standings}
+          showPlayerNames={showPlayerNames}
+          currentUserId={currentUserId}
+        />
       </div>
 
       <TiebreakerDrawer

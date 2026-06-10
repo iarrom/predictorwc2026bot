@@ -64,18 +64,28 @@ export default async function MatchesPage() {
   ]);
 
   const predictionMap = Object.fromEntries(
-    (predictions ?? []).map((p) => [
-      p.match_id,
-      {
-        round_key: p.round_key,
-        outcome: decryptPredictionForDisplay(
-          p.outcome_encrypted,
-          userId!,
+    (predictions ?? []).flatMap((p) => {
+      const outcome = decryptPredictionForDisplay(
+        p.outcome_encrypted,
+        userId!,
+        p.match_id,
+      );
+
+      if (!outcome) {
+        return [];
+      }
+
+      return [
+        [
           p.match_id,
-        ),
-        points_awarded: p.points_awarded,
-      },
-    ]),
+          {
+            round_key: p.round_key,
+            outcome,
+            points_awarded: p.points_awarded,
+          },
+        ],
+      ];
+    }),
   );
 
   const voterMap = Object.fromEntries(

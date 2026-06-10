@@ -7,7 +7,7 @@ export function LeaderboardLiveRefresh({
 }: {
   children: React.ReactNode;
 }) {
-  useLiveRefresh("leaderboard-live", "predictions");
+  useLiveRefresh("leaderboard-live", "predictions", "matches", "tiebreakers");
 
   return children;
 }

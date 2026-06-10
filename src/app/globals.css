@@ -193,12 +193,13 @@
 
     .sports-panel {
         --sports-panel-radius: 1.5rem;
+        --sports-panel-bg: rgb(2 8 56 / 0.55);
         border-radius: var(--sports-panel-radius);
         corner-shape: squircle;
         overflow: hidden;
         isolation: isolate;
         transform: translateZ(0);
-        background: rgb(2 8 56 / 0.55);
+        background: var(--sports-panel-bg);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgb(255 255 255 / 0.05);

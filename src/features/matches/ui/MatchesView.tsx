@@ -126,7 +126,7 @@ function MatchCenterFocus({
 }) {
   if (finished) {
     return (
-      <div className="col-start-2 row-span-2 flex flex-col items-center justify-center gap-1.5 self-center">
+      <div className="col-start-2 row-start-1 flex flex-col items-center justify-center gap-1.5 self-center">
         <p className="min-w-[2.75rem] text-center text-[17px] font-bold leading-none tabular-nums">
           {formatMatchScore(homeScore, awayScore)}
         </p>
@@ -151,7 +151,7 @@ function MatchCenterFocus({
   }
 
   return (
-    <div className="col-start-2 row-span-2 flex flex-col items-center justify-center gap-1.5 self-center">
+    <div className="col-start-2 row-start-1 flex flex-col items-center justify-center gap-1.5 self-center">
       {prediction ? (
         <>
           <p className="max-w-[5.5rem] text-center text-[13px] font-semibold leading-tight line-clamp-2">
@@ -417,7 +417,7 @@ export function MatchesView({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_auto] items-center gap-x-2 gap-y-0.5">
+                        <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_minmax(2rem,auto)] items-start gap-x-2 gap-y-0.5">
                           <div className="col-start-1 row-start-1 flex justify-center">
                             <TeamFlag
                               name={match.home_team_name}
@@ -447,11 +447,11 @@ export function MatchesView({
                             />
                           </div>
 
-                          <p className="col-start-1 row-start-2 line-clamp-2 text-center text-[11px] font-medium leading-tight">
+                          <p className="col-start-1 row-start-2 self-start line-clamp-2 text-center text-[11px] font-medium leading-tight">
                             {match.home_team_name}
                           </p>
 
-                          <p className="col-start-3 row-start-2 line-clamp-2 text-center text-[11px] font-medium leading-tight">
+                          <p className="col-start-3 row-start-2 self-start line-clamp-2 text-center text-[11px] font-medium leading-tight">
                             {match.away_team_name}
                           </p>
                         </div>

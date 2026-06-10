@@ -16,18 +16,34 @@ export function useLiveRefresh(
   useEffect(() => {
     const supabase = createClient();
     let channel = supabase.channel(channelName);
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const scheduleRefresh = () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        router.refresh();
+      }, 3000);
+    };
 
     for (const table of tables) {
       channel = channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
-        () => router.refresh(),
+        scheduleRefresh,
       );
     }
 
     channel.subscribe();
 
     return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
       void supabase.removeChannel(channel);
     };
     // tablesKey tracks the subscribed table list.

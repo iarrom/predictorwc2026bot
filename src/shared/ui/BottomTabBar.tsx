@@ -34,11 +34,11 @@ export function BottomTabBar({ isAdmin }: BottomTabBarProps) {
 
   return (
     <nav
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-50 safe-bottom"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-50"
       aria-label={t("main")}
     >
       <div className="glass-strong corner-squircle pointer-events-auto mx-auto max-w-md rounded-t-[min(var(--radius-3xl),28px)] border-b-0">
-        <div className="flex items-stretch justify-around px-2 pt-2 pb-2">
+        <div className="flex items-stretch justify-around px-2 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
           {allTabs.map((tab) => {
             const active =
               pathname === tab.href || pathname.startsWith(`${tab.href}/`);

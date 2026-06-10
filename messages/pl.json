@@ -151,18 +151,50 @@
       "none": "Brak zaplanowanych meczów",
       "one": "{count} mecz",
       "other": "{count} meczów"
+    },
+    "standings": {
+      "title": "Tabela dogrywki",
+      "description": "Odchylenie od rzeczywistej liczby goli w rundzie. Mniej znaczy lepiej.",
+      "previewDescription": "Porównanie typów z rzeczywistą liczbą goli w rundach.",
+      "previewHint": "Otworzy się po rozpoczęciu pierwszej kolejki.",
+      "name": "Imię",
+      "overall": "Razem",
+      "real": "Fakt",
+      "playerRank": "Gracz #{rank}",
+      "empty": "Brak graczy."
     }
   },
   "leaderboard": {
     "title": "Ranking",
-    "description": "Ranking według punktów za trafione typy wyników",
+    "description": "Ranking według punktów; przy remisie — liczba typów",
     "noPlayers": "Brak graczy.",
     "player": "Gracz",
     "points": "Punkty",
     "picks": "Typy",
+    "tiebreak": "Dogrywka",
     "rank1": "1. miejsce",
     "rank2": "2. miejsce",
-    "rank3": "3. miejsce"
+    "rank3": "3. miejsce",
+    "tabOverall": "Ranking",
+    "tabStages": "Po rundach",
+    "tabChart": "Trend",
+    "stagePoints": "Pkt",
+    "stagePicks": "Typy",
+    "noStagesYet": "Brak zakończonych rund.",
+    "previewHint": "Podgląd — ranking zaktualizuje się po zakończeniu rundy.",
+    "noStagePicks": "Brak typów w tej rundzie.",
+    "chartDescription": "Pozycja po każdej rundzie (niżej = lepiej). Na wąskim ekranie przewiń w bok.",
+    "positionAxis": "Miejsce",
+    "you": "Ty",
+    "stages": {
+      "groupMatchday": "Kolejka {number}",
+      "roundOf32": "1/16",
+      "roundOf16": "1/8",
+      "quarterFinal": "1/4",
+      "semiFinal": "1/2",
+      "thirdPlace": "3.",
+      "final": "Finał"
+    }
   },
   "settings": {
     "title": "Ustawienia",
@@ -239,5 +271,10 @@
       "sendFailed": "Nie udało się wysłać wiadomości Telegram",
       "noPending": "Brak uczestników bez typu"
     }
+  },
+  "errors": {
+    "title": "Coś poszło nie tak",
+    "description": "Przeładuj aplikację i spróbuj ponownie.",
+    "reload": "Przeładuj"
   }
 }

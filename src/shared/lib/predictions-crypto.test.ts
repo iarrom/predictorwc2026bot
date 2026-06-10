@@ -97,4 +97,26 @@ describe("predictions-crypto", () => {
       { user_id: userB, match_id: matchA, outcome: "draw" },
     ]);
   });
+
+  it("skips rows that fail to decrypt", () => {
+    const rows = [
+      {
+        user_id: userA,
+        match_id: matchA,
+        outcome_encrypted: encryptOutcome("home", {
+          userId: userA,
+          matchId: matchA,
+        }),
+      },
+      {
+        user_id: userB,
+        match_id: matchA,
+        outcome_encrypted: "v1.invalid.invalid",
+      },
+    ];
+
+    expect(decryptPredictionRows(rows)).toEqual([
+      { user_id: userA, match_id: matchA, outcome: "home" },
+    ]);
+  });
 });

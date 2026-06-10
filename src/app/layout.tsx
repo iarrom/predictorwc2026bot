@@ -4,6 +4,7 @@ import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ClientErrorReporter } from "@/shared/ui/ClientErrorReporter";
 import { TelegramWebAppInit } from "@/shared/ui/TelegramWebAppInit";
 import { cn } from "@/lib/utils";
 import "./globals.css";
@@ -62,6 +63,7 @@ export default async function RootLayout({
           strategy="beforeInteractive"
         />
         <TelegramWebAppInit />
+        <ClientErrorReporter />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

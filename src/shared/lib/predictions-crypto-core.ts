@@ -122,16 +122,30 @@ export function decryptPredictionRows(
   rows: EncryptedPredictionRow[],
   key: Buffer = getEncryptionKeyFromEnv(),
 ): DecryptedPredictionRow[] {
-  return rows.map((row) => ({
-    user_id: row.user_id,
-    match_id: row.match_id,
-    outcome: decryptOutcome(
-      row.outcome_encrypted,
-      {
+  const decrypted: DecryptedPredictionRow[] = [];
+
+  for (const row of rows) {
+    try {
+      decrypted.push({
+        user_id: row.user_id,
+        match_id: row.match_id,
+        outcome: decryptOutcome(
+          row.outcome_encrypted,
+          {
+            userId: row.user_id,
+            matchId: row.match_id,
+          },
+          key,
+        ),
+      });
+    } catch (error) {
+      console.error("Failed to decrypt prediction row", {
         userId: row.user_id,
         matchId: row.match_id,
-      },
-      key,
-    ),
-  }));
+        error,
+      });
+    }
+  }
+
+  return decrypted;
 }
