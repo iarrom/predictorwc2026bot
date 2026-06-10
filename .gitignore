@@ -36,3 +36,6 @@ pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 .vercel
+
+# supabase cli cache
+supabase/.temp/
