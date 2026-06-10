@@ -73,7 +73,7 @@ export function MatchDrawer({
   const open = Boolean(matchId);
   const [contentMounted, setContentMounted] = useState(() => Boolean(matchId));
   const [carouselApi, setCarouselApi] = useState<CarouselApi>();
-  const [snap, setSnap] = useState<number | string>(COLLAPSED_SNAP);
+  const [snap, setSnap] = useState<number | string>(EXPANDED_SNAP);
   const expanded = snap === EXPANDED_SNAP;
 
   const activeIndex = Math.max(
@@ -90,7 +90,7 @@ export function MatchDrawer({
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- lazy-mount drawer content after first open
       setContentMounted(true);
-      setSnap(COLLAPSED_SNAP);
+      setSnap(EXPANDED_SNAP);
     }
   }, [open]);
 
@@ -179,7 +179,10 @@ export function MatchDrawer({
       activeSnapPoint={snap}
       setActiveSnapPoint={handleSnapChange}
     >
-      <DrawerContent className="mt-0 h-[100dvh] max-h-[100dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
+      <DrawerContent
+        fullscreen
+        className="border-0 bg-transparent p-0 shadow-none before:hidden"
+      >
         <DrawerTitle className="sr-only">Match details</DrawerTitle>
 
         {contentMounted ? (
@@ -200,7 +203,10 @@ export function MatchDrawer({
               }}
               className="h-full min-h-0 w-full flex-1"
             >
-              <CarouselContent className="ml-0 h-full items-stretch">
+              <CarouselContent
+                viewportClassName="h-full"
+                className="ml-0 h-full items-stretch"
+              >
                 {matches.map((match, index) => (
                   <CarouselItem
                     key={match.id}
