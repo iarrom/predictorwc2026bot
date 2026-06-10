@@ -5,9 +5,13 @@ export interface Prediction {
   user_id: string;
   match_id: string;
   round_key: string;
-  outcome: PredictionOutcome;
+  outcome_encrypted: string;
   tiebreaker_value: number | null;
   points_awarded: number | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface DecryptedPrediction extends Omit<Prediction, "outcome_encrypted"> {
+  outcome: PredictionOutcome;
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId } from "@/shared/lib/auth";
+import { encryptOutcome } from "@/shared/lib/predictions-crypto";
 
 const predictionSchema = z.object({
   match_id: z.string().uuid(),
@@ -40,12 +41,17 @@ export async function savePrediction(
     return { error: "Predictions are locked after kickoff" };
   }
 
+  const outcomeEncrypted = encryptOutcome(outcome, {
+    userId,
+    matchId: match_id,
+  });
+
   const { error } = await supabase.from("predictions").upsert(
     {
       user_id: userId,
       match_id,
       round_key: match.round_key,
-      outcome,
+      outcome_encrypted: outcomeEncrypted,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id,match_id" },

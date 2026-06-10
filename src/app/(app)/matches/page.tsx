@@ -2,6 +2,10 @@ import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { buildPredictionsByMatch } from "@/features/matches/lib/predictionsByMatch";
 import { buildTeamColorsMap } from "@/features/matches/lib/teamColors";
 import { buildVoterMap } from "@/features/matches/lib/voterInfo";
+import {
+  decryptPredictionForDisplay,
+  shouldRevealOutcome,
+} from "@/features/predictions/lib/decryptForDisplay";
 import { MatchesView } from "@/features/matches/ui/MatchesView";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId, isParticipant } from "@/shared/lib/auth";
@@ -22,6 +26,10 @@ export default async function MatchesPage() {
     .select("*")
     .order("kickoff_at", { ascending: true });
 
+  const kickoffByMatchId = Object.fromEntries(
+    (matches ?? []).map((match) => [match.id, match.kickoff_at]),
+  );
+
   const [
     { data: predictions },
     { data: allPredictions },
@@ -32,12 +40,12 @@ export default async function MatchesPage() {
     userId
       ? supabase
           .from("predictions")
-          .select("match_id, round_key, outcome")
+          .select("match_id, round_key, outcome_encrypted")
           .eq("user_id", userId)
       : Promise.resolve({ data: [] }),
     supabase
       .from("predictions")
-      .select("match_id, user_id, outcome, points_awarded"),
+      .select("match_id, user_id, outcome_encrypted, points_awarded"),
     supabase.from("profiles").select("id, display_name, photo_url"),
     supabase.from("teams").select("name, primary_color"),
     supabase
@@ -51,7 +59,11 @@ export default async function MatchesPage() {
       p.match_id,
       {
         round_key: p.round_key,
-        outcome: p.outcome,
+        outcome: decryptPredictionForDisplay(
+          p.outcome_encrypted,
+          userId!,
+          p.match_id,
+        ),
       },
     ]),
   );
@@ -60,8 +72,27 @@ export default async function MatchesPage() {
     buildVoterMap(allPredictions ?? [], profiles ?? []),
   );
 
+  const revealedPredictions = (allPredictions ?? [])
+    .filter((prediction) =>
+      shouldRevealOutcome(
+        prediction.user_id,
+        userId,
+        kickoffByMatchId[prediction.match_id],
+      ),
+    )
+    .map((prediction) => ({
+      match_id: prediction.match_id,
+      user_id: prediction.user_id,
+      points_awarded: prediction.points_awarded,
+      outcome: decryptPredictionForDisplay(
+        prediction.outcome_encrypted,
+        prediction.user_id,
+        prediction.match_id,
+      ),
+    }));
+
   const predictionsByMatch = buildPredictionsByMatch(
-    allPredictions ?? [],
+    revealedPredictions,
     profiles ?? [],
   );
 
