@@ -261,7 +261,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
             }}
             className="flex flex-col gap-3"
           >
-            <TabsList className="flex h-auto w-full shrink-0 bg-white/10 p-1 group-data-horizontal/tabs:h-auto">
+            <TabsList
+              onClick={() => {
+                if (!expanded) {
+                  onRequestExpand?.();
+                }
+              }}
+              className="flex h-auto w-full shrink-0 bg-white/10 p-1 group-data-horizontal/tabs:h-auto"
+            >
               {groupStanding && (
                 <TabsTrigger value="standings" className={matchTabClassName}>
                   Standings

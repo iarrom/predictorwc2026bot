@@ -185,10 +185,7 @@ export function MatchDrawer({
               }}
               className="h-full min-h-0 w-full flex-1"
             >
-              <CarouselContent
-                className="ml-0 h-full items-stretch"
-                data-vaul-no-drag
-              >
+              <CarouselContent className="ml-0 h-full items-stretch">
                 {matches.map((match, index) => (
                   <CarouselItem
                     key={match.id}
