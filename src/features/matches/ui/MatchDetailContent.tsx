@@ -9,9 +9,11 @@ import {
   toPredictionFormInitial,
   type PredictionDetail,
 } from "@/features/matches/lib/predictionDetail";
+import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import { shouldRevealMatchPredictions } from "@/features/matches/lib/shouldRevealMatchPredictions";
 import { GroupStandingsCard } from "@/features/matches/ui/GroupStandingsList";
-import { MatchPredictionsBoard } from "@/features/matches/ui/MatchPredictionsBoard";
 import { MatchEventsTimeline } from "@/features/matches/ui/MatchEventsTimeline";
+import { MatchPredictionsLeaderboard } from "@/features/matches/ui/MatchPredictionsLeaderboard";
 import { MatchLineups } from "@/features/matches/ui/MatchLineups";
 import { MatchTeamBackground } from "@/features/matches/ui/MatchTeamBackground";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
@@ -29,7 +31,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +43,7 @@ interface MatchDetailContentProps {
   currentUserId?: string | null;
   teamColors?: Record<string, string>;
   canPredict?: boolean;
+  canSeePlayerNames?: boolean;
   isActive?: boolean;
   groupStanding?: GroupStanding;
   expanded?: boolean;
@@ -129,6 +131,42 @@ function formatMatchSubtitle(match: Match): string {
   return match.round_display;
 }
 
+function LockedPredictionSummary({
+  prediction,
+  homeTeamName,
+  awayTeamName,
+  finished,
+}: {
+  prediction: PredictionDetail | undefined;
+  homeTeamName: string;
+  awayTeamName: string;
+  finished: boolean;
+}) {
+  if (!prediction) {
+    return <p className="text-sm text-white/70">No prediction</p>;
+  }
+
+  const points = prediction.points_awarded;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-lg font-bold leading-tight text-white">
+        {formatOutcomeWins(prediction.outcome, homeTeamName, awayTeamName)}
+      </p>
+      {finished && points !== null && (
+        <p
+          className={cn(
+            "text-sm font-semibold tabular-nums",
+            points > 0 ? "text-emerald-300" : "text-white/60",
+          )}
+        >
+          {points > 0 ? `+${points} pts` : `${points} pts`}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export const MatchDetailContent = memo(function MatchDetailContent({
   match,
   voters,
@@ -138,6 +176,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   currentUserId,
   teamColors = {},
   canPredict = false,
+  canSeePlayerNames = true,
   isActive = true,
   groupStanding,
   expanded = false,
@@ -159,6 +198,9 @@ export const MatchDetailContent = memo(function MatchDetailContent({
     : live || finished
       ? "updates"
       : "lineups";
+  const predictionsRevealed = shouldRevealMatchPredictions(match);
+  const showPredictionSection =
+    !locked || canPredict || predictionsRevealed;
 
   return (
     <div
@@ -227,34 +269,44 @@ export const MatchDetailContent = memo(function MatchDetailContent({
           </div>
         </section>
 
-        <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
-          <h2 className="mb-3 shrink-0 font-heading text-base font-medium text-white">
-            {locked ? "Predictions" : "Your prediction"}
-          </h2>
+        {showPredictionSection && (
+          <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
+            <h2 className="mb-3 shrink-0 font-heading text-base font-medium text-white">
+              {predictionsRevealed ? "Predictions" : "Your prediction"}
+            </h2>
 
-          <div className="flex flex-col">
-            {locked ? (
-              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                <MatchPredictionsBoard
-                  match={match}
-                  predictions={matchPredictions}
-                  currentUserId={currentUserId}
+            <div className="flex flex-col">
+              {locked ? (
+                predictionsRevealed ? (
+                  <MatchPredictionsLeaderboard
+                    match={match}
+                    predictions={matchPredictions}
+                    currentUserId={currentUserId}
+                    canSeePlayerNames={canSeePlayerNames}
+                  />
+                ) : (
+                  <LockedPredictionSummary
+                    prediction={prediction}
+                    homeTeamName={match.home_team_name}
+                    awayTeamName={match.away_team_name}
+                    finished={finished}
+                  />
+                )
+              ) : (
+                <PredictionForm
+                  matchId={match.id}
+                  homeTeamName={match.home_team_name}
+                  awayTeamName={match.away_team_name}
+                  initial={
+                    prediction ? toPredictionFormInitial(prediction) : undefined
+                  }
+                  locked={false}
+                  canPredict={canPredict}
                 />
-              </div>
-            ) : (
-              <PredictionForm
-                matchId={match.id}
-                homeTeamName={match.home_team_name}
-                awayTeamName={match.away_team_name}
-                initial={
-                  prediction ? toPredictionFormInitial(prediction) : undefined
-                }
-                locked={false}
-                canPredict={canPredict}
-              />
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
 
         <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
           <Tabs

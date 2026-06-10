@@ -42,6 +42,7 @@ interface MatchesViewProps {
   currentUserId: string | null;
   teamColors: Record<string, string>;
   canPredict: boolean;
+  canSeePlayerNames: boolean;
 }
 
 const TABS: { key: MatchDayBucket; label: string }[] = [
@@ -204,6 +205,7 @@ export function MatchesView({
   currentUserId,
   teamColors,
   canPredict,
+  canSeePlayerNames,
 }: MatchesViewProps) {
   const router = useRouter();
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
@@ -382,10 +384,7 @@ export function MatchesView({
                 {!isCollapsed &&
                   dayMatches.map((match) => {
                     const prediction = predictionMap[match.id];
-                    const voters = voterMap[match.id] ?? {
-                      count: 0,
-                      voters: [],
-                    };
+                    const voters = voterMap[match.id] ?? { count: 0 };
                     const locked = new Date(match.kickoff_at) <= new Date();
                     const live =
                       match.status === "live" &&
@@ -396,10 +395,9 @@ export function MatchesView({
                       match.home_score !== null &&
                       match.away_score !== null;
                     const isSelected = selectedMatchId === match.id;
-                    const userPrediction = predictionsByMatch[match.id]?.find(
-                      (p) => p.user_id === currentUserId,
-                    );
-                    const points = finished ? (userPrediction?.points_awarded ?? null) : null;
+                    const points = finished
+                      ? (predictionMap[match.id]?.points_awarded ?? null)
+                      : null;
                     const liveMinute = formatLiveMinute(match.minute, match.injury_time);
 
                     return (
@@ -487,6 +485,7 @@ export function MatchesView({
         currentUserId={currentUserId}
         teamColors={teamColors}
         canPredict={canPredict}
+        canSeePlayerNames={canSeePlayerNames}
         groupStandingsByName={groupStandingsByName}
         onMatchChange={handleMatchChange}
         onClose={closeMatch}

@@ -7,6 +7,7 @@ import {
   FootballIcon,
   RankingIcon,
   ShieldIcon,
+  Target02Icon,
 } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ interface BottomTabBarProps {
 
 const tabs = [
   { href: "/matches", label: "Matches", icon: FootballIcon },
+  { href: "/tiebreaker", label: "Tie-break", icon: Target02Icon },
   { href: "/leaderboard", label: "Leaderboard", icon: RankingIcon },
 ] as const;
 

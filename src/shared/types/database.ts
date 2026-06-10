@@ -207,6 +207,24 @@ export interface Database {
         >;
         Relationships: [];
       };
+      tiebreakers: {
+        Row: {
+          user_id: string;
+          round_key: string;
+          goals_encrypted: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          round_key: string;
+          goals_encrypted: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["tiebreakers"]["Insert"]>;
+        Relationships: [];
+      };
     };
     Views: {
       leaderboard_base: {
@@ -222,6 +240,10 @@ export interface Database {
     Functions: {
       is_admin: { Args: Record<string, never>; Returns: boolean };
       is_participant: { Args: Record<string, never>; Returns: boolean };
+      tiebreaker_round_open: {
+        Args: { p_round_key: string };
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

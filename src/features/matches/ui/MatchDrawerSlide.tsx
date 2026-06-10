@@ -3,8 +3,8 @@
 import { memo } from "react";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
-import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import { MatchDetailContent } from "@/features/matches/ui/MatchDetailContent";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ interface MatchDrawerSlideProps {
   currentUserId: string | null;
   teamColors: Record<string, string>;
   canPredict: boolean;
+  canSeePlayerNames: boolean;
   groupStandingsByName: Record<string, GroupStanding>;
   isActive: boolean;
   isMounted: boolean;
@@ -35,6 +36,7 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
   currentUserId,
   teamColors,
   canPredict,
+  canSeePlayerNames,
   groupStandingsByName,
   isActive,
   isMounted,
@@ -66,6 +68,7 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
           currentUserId={currentUserId}
           teamColors={teamColors}
           canPredict={canPredict}
+          canSeePlayerNames={canSeePlayerNames}
           groupStanding={
             match.group_name
               ? groupStandingsByName[match.group_name]

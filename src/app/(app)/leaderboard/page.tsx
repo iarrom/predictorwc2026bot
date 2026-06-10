@@ -1,4 +1,5 @@
 import { getInitials } from "@/features/matches/lib/voterInfo";
+import { canSeePlayerNames } from "@/shared/lib/auth";
 import { createClient } from "@/shared/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -30,6 +31,7 @@ function RankCell({ rank }: { rank: number }) {
 
 export default async function LeaderboardPage() {
   const supabase = await createClient();
+  const showNames = await canSeePlayerNames();
 
   const { data: leaderboard } = await supabase
     .from("leaderboard_base")
@@ -37,13 +39,17 @@ export default async function LeaderboardPage() {
     .order("total_points", { ascending: false })
     .order("predictions_count", { ascending: false });
 
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, photo_url");
+  const photoMap = new Map<string, string | null>();
 
-  const photoMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p.photo_url]),
-  );
+  if (showNames) {
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, photo_url");
+
+    for (const p of profiles ?? []) {
+      photoMap.set(p.id, p.photo_url);
+    }
+  }
 
   const entries = (leaderboard ?? []).map((entry) => ({
     ...entry,
@@ -65,7 +71,7 @@ export default async function LeaderboardPage() {
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
               No players yet.
             </p>
-          ) : (
+          ) : showNames ? (
             <>
               <div className="grid grid-cols-[2rem_minmax(0,1fr)_4rem_3rem] items-center gap-x-3 px-3 py-2 text-[11px] font-medium text-muted-foreground">
                 <span className="text-center">#</span>
@@ -104,6 +110,29 @@ export default async function LeaderboardPage() {
                     </p>
                     <p className="text-right text-[12px] tabular-nums text-muted-foreground">
                       {entry.predictions_count}
+                    </p>
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-[2rem_1fr] items-center gap-x-3 px-3 py-2 text-[11px] font-medium text-muted-foreground">
+                <span className="text-center">#</span>
+                <span className="text-right">Points</span>
+              </div>
+
+              {entries.map((entry, index) => {
+                const rank = index + 1;
+
+                return (
+                  <div
+                    key={entry.user_id}
+                    className="grid grid-cols-[2rem_1fr] items-center gap-x-3 border-t border-white/[0.08] px-3 py-2.5"
+                  >
+                    <RankCell rank={rank} />
+                    <p className="text-right text-[17px] font-bold leading-none tabular-nums text-foreground">
+                      {entry.total_points}
                     </p>
                   </div>
                 );

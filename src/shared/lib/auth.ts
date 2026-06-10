@@ -31,3 +31,7 @@ export async function isParticipant(): Promise<boolean> {
   const role = await getCurrentUserRole();
   return role === "participant" || role === "admin";
 }
+
+export async function canSeePlayerNames(): Promise<boolean> {
+  return isParticipant();
+}

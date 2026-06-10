@@ -9,8 +9,8 @@ import {
 } from "react";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
-import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import { MatchDrawerSlide } from "@/features/matches/ui/MatchDrawerSlide";
 import {
@@ -57,6 +57,7 @@ interface MatchDrawerProps {
   currentUserId: string | null;
   teamColors: Record<string, string>;
   canPredict: boolean;
+  canSeePlayerNames: boolean;
   groupStandingsByName: Record<string, GroupStanding>;
   onMatchChange: (matchId: string) => void;
   onClose: () => void;
@@ -72,6 +73,7 @@ export function MatchDrawer({
   currentUserId,
   teamColors,
   canPredict,
+  canSeePlayerNames,
   groupStandingsByName,
   onMatchChange,
   onClose,
@@ -281,13 +283,14 @@ export function MatchDrawer({
                   >
                     <MatchDrawerSlide
                       match={match}
-                      voters={voterMap[match.id] ?? { count: 0, voters: [] }}
+                      voters={voterMap[match.id] ?? { count: 0 }}
                       prediction={predictionMap[match.id]}
                       matchPredictions={predictionsByMatch[match.id] ?? []}
                       matchEvents={eventsByMatch[match.id] ?? []}
                       currentUserId={currentUserId}
                       teamColors={teamColors}
                       canPredict={canPredict}
+                      canSeePlayerNames={canSeePlayerNames}
                       groupStandingsByName={groupStandingsByName}
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}

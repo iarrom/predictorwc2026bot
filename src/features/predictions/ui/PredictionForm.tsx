@@ -95,7 +95,8 @@ export function PredictionForm({
   if (!canPredict) {
     return (
       <p className="text-sm text-white/70">
-        Voting is available after an admin approves your account.
+        You can browse matches and the leaderboard. Voting opens after an
+        admin approves your account.
       </p>
     );
   }
