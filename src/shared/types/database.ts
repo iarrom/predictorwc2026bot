@@ -2,6 +2,15 @@ export type UserRole = "guest" | "participant" | "admin";
 export type PredictionOutcome = "home" | "draw" | "away";
 export type PlayerPosition = "GK" | "DF" | "MF" | "FW";
 export type MatchStatus = "scheduled" | "live" | "finished";
+export type MatchEventType =
+  | "goal"
+  | "penalty"
+  | "own_goal"
+  | "yellow_card"
+  | "red_card"
+  | "yellow_red_card"
+  | "substitution";
+export type MatchEventSide = "home" | "away";
 
 export interface Database {
   public: {
@@ -12,6 +21,7 @@ export interface Database {
           display_name: string;
           telegram_id: number | null;
           photo_url: string | null;
+          timezone: string | null;
           role: UserRole;
           created_at: string;
           updated_at: string;
@@ -21,6 +31,7 @@ export interface Database {
           display_name: string;
           telegram_id?: number | null;
           photo_url?: string | null;
+          timezone?: string | null;
           role?: UserRole;
           created_at?: string;
           updated_at?: string;
@@ -61,6 +72,13 @@ export interface Database {
           status: MatchStatus;
           home_score: number | null;
           away_score: number | null;
+          fd_match_id: number | null;
+          minute: number | null;
+          injury_time: number | null;
+          fd_status: string | null;
+          fd_last_updated: string | null;
+          home_lineup: Record<string, unknown> | null;
+          away_lineup: Record<string, unknown> | null;
           created_at: string;
           updated_at: string;
         };
@@ -80,10 +98,51 @@ export interface Database {
           status?: MatchStatus;
           home_score?: number | null;
           away_score?: number | null;
+          fd_match_id?: number | null;
+          minute?: number | null;
+          injury_time?: number | null;
+          fd_status?: string | null;
+          fd_last_updated?: string | null;
+          home_lineup?: Record<string, unknown> | null;
+          away_lineup?: Record<string, unknown> | null;
           created_at?: string;
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["matches"]["Insert"]>;
+        Relationships: [];
+      };
+      match_events: {
+        Row: {
+          id: string;
+          match_id: string;
+          event_key: string;
+          type: MatchEventType;
+          minute: number;
+          injury_time: number | null;
+          side: MatchEventSide;
+          player_name: string;
+          secondary_player_name: string | null;
+          score_home: number | null;
+          score_away: number | null;
+          payload: Record<string, unknown> | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          match_id: string;
+          event_key: string;
+          type: MatchEventType;
+          minute: number;
+          injury_time?: number | null;
+          side: MatchEventSide;
+          player_name: string;
+          secondary_player_name?: string | null;
+          score_home?: number | null;
+          score_away?: number | null;
+          payload?: Record<string, unknown> | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["match_events"]["Insert"]>;
         Relationships: [];
       };
       players: {
@@ -130,6 +189,22 @@ export interface Database {
           updated_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["predictions"]["Insert"]>;
+        Relationships: [];
+      };
+      prediction_reminders: {
+        Row: {
+          user_id: string;
+          match_id: string;
+          sent_at: string;
+        };
+        Insert: {
+          user_id: string;
+          match_id: string;
+          sent_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["prediction_reminders"]["Insert"]
+        >;
         Relationships: [];
       };
     };

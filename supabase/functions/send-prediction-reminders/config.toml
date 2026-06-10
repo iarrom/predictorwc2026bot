@@ -1,0 +1,2 @@
+[functions.send-prediction-reminders]
+verify_jwt = false

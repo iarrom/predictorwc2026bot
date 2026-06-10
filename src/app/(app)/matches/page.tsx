@@ -1,5 +1,4 @@
-import { Suspense } from "react";
-import type { Match } from "@/entities/match/model/types";
+import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { buildPredictionsByMatch } from "@/features/matches/lib/predictionsByMatch";
 import { buildTeamColorsMap } from "@/features/matches/lib/teamColors";
 import { buildVoterMap } from "@/features/matches/lib/voterInfo";
@@ -28,6 +27,7 @@ export default async function MatchesPage() {
     { data: allPredictions },
     { data: profiles },
     { data: teams },
+    { data: matchEvents },
   ] = await Promise.all([
     userId
       ? supabase
@@ -40,6 +40,10 @@ export default async function MatchesPage() {
       .select("match_id, user_id, outcome, points_awarded"),
     supabase.from("profiles").select("id, display_name, photo_url"),
     supabase.from("teams").select("name, primary_color"),
+    supabase
+      .from("match_events")
+      .select("*")
+      .order("minute", { ascending: true }),
   ]);
 
   const predictionMap = Object.fromEntries(
@@ -63,6 +67,15 @@ export default async function MatchesPage() {
 
   const teamColors = buildTeamColorsMap(teams ?? []);
 
+  const eventsByMatch = (matchEvents ?? []).reduce<
+    Record<string, MatchEvent[]>
+  >((acc, event) => {
+    const list = acc[event.match_id] ?? [];
+    list.push(event as MatchEvent);
+    acc[event.match_id] = list;
+    return acc;
+  }, {});
+
   if (!matches || matches.length === 0) {
     return (
       <Empty className="glass corner-squircle mt-4 rounded-3xl border-0">
@@ -81,16 +94,15 @@ export default async function MatchesPage() {
   }
 
   return (
-    <Suspense>
-      <MatchesView
-        matches={matches as Match[]}
-        voterMap={voterMap}
-        predictionMap={predictionMap}
-        predictionsByMatch={predictionsByMatch}
-        currentUserId={userId}
-        teamColors={teamColors}
-        canPredict={canPredict}
-      />
-    </Suspense>
+    <MatchesView
+      matches={matches as Match[]}
+      voterMap={voterMap}
+      predictionMap={predictionMap}
+      predictionsByMatch={predictionsByMatch}
+      eventsByMatch={eventsByMatch}
+      currentUserId={userId}
+      teamColors={teamColors}
+      canPredict={canPredict}
+    />
   );
 }

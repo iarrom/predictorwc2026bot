@@ -46,6 +46,7 @@ type TelegramUserLike = {
 
 async function ensureTelegramUserAndSignIn(
   tgUser: TelegramUserLike,
+  timezone?: string,
 ): Promise<{ error?: string }> {
   const pepper = getEnv("TELEGRAM_AUTH_PEPPER");
   if (!pepper) {
@@ -77,10 +78,16 @@ async function ensureTelegramUserAndSignIn(
     );
     if (updateError) return { error: updateError.message };
 
-    await admin
-      .from("profiles")
-      .update({ display_name: displayName, photo_url: photoUrl })
-      .eq("id", profile.id);
+    const profileUpdate: {
+      display_name: string;
+      photo_url: string | null;
+      timezone?: string;
+    } = { display_name: displayName, photo_url: photoUrl };
+    if (timezone) {
+      profileUpdate.timezone = timezone;
+    }
+
+    await admin.from("profiles").update(profileUpdate).eq("id", profile.id);
   } else {
     const { error: createError } = await admin.auth.admin.createUser({
       email,
@@ -89,6 +96,13 @@ async function ensureTelegramUserAndSignIn(
       user_metadata: metadata,
     });
     if (createError) return { error: createError.message };
+
+    if (timezone) {
+      await admin
+        .from("profiles")
+        .update({ timezone })
+        .eq("telegram_id", tgUser.id);
+    }
   }
 
   const supabase = await createClient();
@@ -104,6 +118,7 @@ async function ensureTelegramUserAndSignIn(
 
 export async function signInWithTelegram(
   initDataRaw: string,
+  timezone?: string,
 ): Promise<{ error?: string }> {
   if (!initDataRaw) {
     return { error: "Missing Telegram init data" };
@@ -126,10 +141,12 @@ export async function signInWithTelegram(
     return { error: "Telegram user not found in init data" };
   }
 
-  return ensureTelegramUserAndSignIn(tgUser);
+  return ensureTelegramUserAndSignIn(tgUser, timezone);
 }
 
-export async function signInWithDevBypass(): Promise<{ error?: string }> {
+export async function signInWithDevBypass(
+  timezone?: string,
+): Promise<{ error?: string }> {
   if (process.env.NODE_ENV !== "development") {
     return { error: "outside_telegram" };
   }
@@ -155,10 +172,13 @@ export async function signInWithDevBypass(): Promise<{ error?: string }> {
       ? nameParts.slice(1).join(" ")
       : undefined;
 
-  return ensureTelegramUserAndSignIn({
-    id: telegramId,
-    first_name: firstName,
-    last_name: lastName,
-    photo_url: profile?.photo_url ?? undefined,
-  });
+  return ensureTelegramUserAndSignIn(
+    {
+      id: telegramId,
+      first_name: firstName,
+      last_name: lastName,
+      photo_url: profile?.photo_url ?? undefined,
+    },
+    timezone,
+  );
 }

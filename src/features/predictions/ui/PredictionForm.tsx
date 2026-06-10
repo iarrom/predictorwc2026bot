@@ -2,10 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
-import {
-  formatOutcomeLabel,
-  formatOutcomeShort,
-} from "@/entities/prediction/lib/formatOutcome";
+import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { savePrediction } from "@/features/predictions/actions";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
@@ -21,7 +18,7 @@ interface PredictionFormProps {
 }
 
 const outcomeTabClassName =
-  "h-full min-h-14 flex-1 flex-col gap-0.5 px-2 py-2 text-sm text-white/60 hover:text-white data-active:bg-white/20 data-active:text-white dark:text-white/60 dark:hover:text-white dark:data-active:bg-white/20 dark:data-active:text-white";
+  "h-full min-h-14 min-w-0 basis-0 flex-1 flex-col gap-0.5 px-1 py-2 text-sm whitespace-normal text-white/60 hover:text-white data-active:bg-white/20 data-active:text-white dark:text-white/60 dark:hover:text-white dark:data-active:bg-white/20 dark:data-active:text-white";
 
 function PredictionSummary({
   outcome,
@@ -37,11 +34,8 @@ function PredictionSummary({
   return (
     <div className="flex min-h-0 flex-1 flex-col justify-between gap-4">
       <div className="flex flex-col gap-1 text-center">
-        <p className="text-3xl font-bold tabular-nums text-white">
-          {formatOutcomeShort(outcome)}
-        </p>
-        <p className="text-sm text-white/70">
-          {formatOutcomeLabel(outcome, homeTeamName, awayTeamName)}
+        <p className="text-lg font-bold leading-tight text-white">
+          {formatOutcomeWins(outcome, homeTeamName, awayTeamName)}
         </p>
       </div>
       <Button
@@ -92,7 +86,7 @@ export function PredictionForm({
     return (
       <p className="text-sm text-white/70">
         {initial
-          ? `Your pick: ${formatOutcomeLabel(initial.outcome, homeTeamName, awayTeamName)}`
+          ? `Your pick: ${formatOutcomeWins(initial.outcome, homeTeamName, awayTeamName)}`
           : "Predictions are locked."}
       </p>
     );
@@ -133,7 +127,7 @@ export function PredictionForm({
               if (value) setOutcome(value as PredictionOutcome);
             }}
           >
-            <TabsList className="h-auto w-full bg-white/10 p-1 group-data-horizontal/tabs:h-auto">
+            <TabsList className="flex h-auto w-full bg-white/10 p-1 group-data-horizontal/tabs:h-auto">
               <TabsTrigger value="home" className={outcomeTabClassName}>
                 <span className="text-lg font-bold">1</span>
                 <span className="line-clamp-2 text-[10px] leading-tight">

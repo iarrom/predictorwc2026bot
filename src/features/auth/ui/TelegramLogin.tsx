@@ -22,10 +22,11 @@ export function TelegramLogin() {
     if (attemptedRef.current) return;
     attemptedRef.current = true;
 
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const initData = window.Telegram?.WebApp?.initData;
     const signIn = initData
-      ? signInWithTelegram(initData)
-      : signInWithDevBypass();
+      ? signInWithTelegram(initData, timezone)
+      : signInWithDevBypass(timezone);
 
     signIn
       .then((result) => {

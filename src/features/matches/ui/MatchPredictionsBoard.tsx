@@ -1,10 +1,7 @@
 "use client";
 
 import type { Match } from "@/entities/match/model/types";
-import {
-  formatOutcomeLabel,
-  formatOutcomeShort,
-} from "@/entities/prediction/lib/formatOutcome";
+import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import { getInitials } from "@/features/matches/lib/voterInfo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -69,8 +66,7 @@ export function MatchPredictionsBoard({
                 )}
               </div>
               <p className="truncate text-xs text-muted-foreground">
-                {formatOutcomeShort(entry.outcome)} ·{" "}
-                {formatOutcomeLabel(
+                {formatOutcomeWins(
                   entry.outcome,
                   match.home_team_name,
                   match.away_team_name,

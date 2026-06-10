@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "import:schedule": "tsx scripts/import-schedule.ts",
     "import:squads": "tsx scripts/import-squads.ts",
+    "map:fd": "tsx scripts/map-football-data.ts",
     "extract:team-colors": "tsx scripts/extract-team-colors.ts"
   },
   "dependencies": {

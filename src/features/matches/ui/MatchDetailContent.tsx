@@ -1,16 +1,18 @@
 "use client";
 
 import { memo } from "react";
-import type { Match } from "@/entities/match/model/types";
-import {
-  formatOutcomeLabel,
-  formatOutcomeShort,
-} from "@/entities/prediction/lib/formatOutcome";
+import type { GroupStanding } from "@/entities/match/lib/standings";
+import type { Match, MatchEvent } from "@/entities/match/model/types";
+import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
+import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import {
   toPredictionFormInitial,
   type PredictionDetail,
 } from "@/features/matches/lib/predictionDetail";
+import { GroupStandingsCard } from "@/features/matches/ui/GroupStandingsList";
 import { MatchPredictionsBoard } from "@/features/matches/ui/MatchPredictionsBoard";
+import { MatchEventsTimeline } from "@/features/matches/ui/MatchEventsTimeline";
+import { MatchLineups } from "@/features/matches/ui/MatchLineups";
 import { MatchTeamBackground } from "@/features/matches/ui/MatchTeamBackground";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
 import { PredictionForm } from "@/features/predictions/ui/PredictionForm";
@@ -21,6 +23,12 @@ import {
 import { formatMatchScore } from "@/shared/lib/formatMatchScore";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 
@@ -29,11 +37,16 @@ interface MatchDetailContentProps {
   voters: MatchVoterInfo;
   prediction?: PredictionDetail;
   matchPredictions?: MatchPredictionEntry[];
+  matchEvents?: MatchEvent[];
   currentUserId?: string | null;
   teamColors?: Record<string, string>;
   canPredict?: boolean;
   isActive?: boolean;
+  groupStanding?: GroupStanding;
 }
+
+const matchTabClassName =
+  "min-h-9 flex-1 text-xs text-white/60 hover:text-white data-active:bg-white/20 data-active:text-white dark:text-white/60 dark:hover:text-white dark:data-active:bg-white/20 dark:data-active:text-white";
 
 function MatchDetailCenterFocus({
   prediction,
@@ -45,6 +58,7 @@ function MatchDetailCenterFocus({
   kickoffAt,
   homeTeamName,
   awayTeamName,
+  liveMinute,
 }: {
   prediction: PredictionDetail | undefined;
   locked: boolean;
@@ -55,27 +69,22 @@ function MatchDetailCenterFocus({
   kickoffAt: string;
   homeTeamName: string;
   awayTeamName: string;
+  liveMinute: string | null;
 }) {
   return (
     <div className="col-start-2 row-span-2 flex min-w-20 flex-col items-center justify-center gap-1 self-center">
       {prediction ? (
-        <p className="text-3xl font-bold leading-none tabular-nums text-white">
-          {formatOutcomeShort(prediction.outcome)}
-        </p>
-      ) : locked ? (
-        <p className="text-lg font-medium text-white/60">Missed</p>
-      ) : (
-        <p className="text-lg font-medium text-red-300">No pick</p>
-      )}
-
-      {prediction && (
-        <p className="line-clamp-2 text-center text-[11px] text-white/70">
-          {formatOutcomeLabel(
+        <p className="line-clamp-2 text-center text-lg font-bold leading-tight text-white">
+          {formatOutcomeWins(
             prediction.outcome,
             homeTeamName,
             awayTeamName,
           )}
         </p>
+      ) : locked ? (
+        <p className="text-lg font-medium text-white/60">Missed</p>
+      ) : (
+        <p className="text-lg font-medium text-red-300">No pick</p>
       )}
 
       {showScore && (
@@ -88,7 +97,7 @@ function MatchDetailCenterFocus({
               variant="destructive"
               className="h-5 rounded-md border-0 bg-red-500/20 px-2 text-[10px] font-semibold text-red-300"
             >
-              LIVE
+              {liveMinute ? `LIVE ${liveMinute}` : "LIVE"}
             </Badge>
           )}
         </div>
@@ -122,10 +131,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   voters,
   prediction,
   matchPredictions = [],
+  matchEvents = [],
   currentUserId,
   teamColors = {},
   canPredict = false,
   isActive = true,
+  groupStanding,
 }: MatchDetailContentProps) {
   const locked = new Date(match.kickoff_at) <= new Date();
   const live =
@@ -137,9 +148,15 @@ export const MatchDetailContent = memo(function MatchDetailContent({
     match.home_score !== null &&
     match.away_score !== null;
   const showScore = live || finished;
+  const liveMinute = formatLiveMinute(match.minute, match.injury_time);
+  const defaultMatchTab = groupStanding
+    ? "standings"
+    : live || finished
+      ? "updates"
+      : "lineups";
 
   return (
-    <div className="match-drawer-card relative flex h-full w-full flex-col overflow-hidden">
+    <div className="match-drawer-card corner-squircle relative flex max-h-[calc(92dvh-5rem)] w-full flex-col">
       <MatchTeamBackground
         homeTeamName={match.home_team_name}
         awayTeamName={match.away_team_name}
@@ -147,7 +164,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         animate={isActive}
       />
 
-      <div className="relative flex min-h-0 flex-1 flex-col px-4 pb-4 pt-2">
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-2">
         <section className="flex shrink-0 flex-col gap-2 pb-4">
           <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
             {formatMatchSubtitle(match)}
@@ -168,6 +185,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               kickoffAt={match.kickoff_at}
               homeTeamName={match.home_team_name}
               awayTeamName={match.away_team_name}
+              liveMinute={liveMinute}
             />
 
             <div className="col-start-3 row-start-1 flex justify-center">
@@ -192,12 +210,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
           </div>
         </section>
 
-        <section className="flex min-h-0 flex-1 flex-col border-t border-white/10 pt-4">
+        <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
           <h2 className="mb-3 shrink-0 font-heading text-base font-medium text-white">
             {locked ? "Predictions" : "Your prediction"}
           </h2>
 
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex flex-col">
             {locked ? (
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
                 <MatchPredictionsBoard
@@ -219,6 +237,53 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               />
             )}
           </div>
+        </section>
+
+        <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
+          <Tabs defaultValue={defaultMatchTab} className="flex flex-col gap-3">
+            <TabsList className="flex h-auto w-full shrink-0 bg-white/10 p-1 group-data-horizontal/tabs:h-auto">
+              {groupStanding && (
+                <TabsTrigger value="standings" className={matchTabClassName}>
+                  Standings
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="lineups" className={matchTabClassName}>
+                Line-ups
+              </TabsTrigger>
+              <TabsTrigger value="updates" className={matchTabClassName}>
+                Updates
+              </TabsTrigger>
+            </TabsList>
+
+            {groupStanding && (
+              <TabsContent value="standings" className="mt-0">
+                <GroupStandingsCard
+                  group={groupStanding}
+                  highlightedTeams={[
+                    match.home_team_name,
+                    match.away_team_name,
+                  ]}
+                />
+              </TabsContent>
+            )}
+
+            <TabsContent value="lineups" className="mt-0">
+              <MatchLineups
+                homeTeamName={match.home_team_name}
+                awayTeamName={match.away_team_name}
+                homeLineup={match.home_lineup}
+                awayLineup={match.away_lineup}
+              />
+            </TabsContent>
+
+            <TabsContent value="updates" className="mt-0">
+              <MatchEventsTimeline
+                events={matchEvents}
+                homeTeamName={match.home_team_name}
+                awayTeamName={match.away_team_name}
+              />
+            </TabsContent>
+          </Tabs>
         </section>
       </div>
     </div>

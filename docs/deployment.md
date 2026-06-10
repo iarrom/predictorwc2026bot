@@ -38,17 +38,48 @@ pnpm import:schedule
 pnpm import:squads
 ```
 
-## Edge Functions (будущее)
+## Edge Functions
+
+### sync-live-matches
+
+Синхронизация live-данных с football-data.org (pg_cron каждые 20 секунд).
 
 ```bash
-supabase functions deploy --project-ref dlwpiikzuwpvbvnjupmn
+supabase functions deploy sync-live-matches --project-ref dlwpiikzuwpvbvnjupmn
 ```
 
-Секреты edge functions:
+Vault secrets (Dashboard → Project Settings → Vault):
 
+- `sync_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/sync-live-matches`
+- `cron_secret` = случайная строка (та же, что `CRON_SECRET` у функции)
+
+### send-prediction-reminders
+
+Telegram-напоминания за 6 часов до матча, если нет прогноза (pg_cron каждые 10 минут).
+
+1. Применить миграцию `005_prediction_reminders.sql`
+2. Задеплоить функцию:
+
+```bash
+supabase functions deploy send-prediction-reminders --project-ref dlwpiikzuwpvbvnjupmn
 ```
-supabase secrets set TELEGRAM_BOT_TOKEN=... --project-ref dlwpiikzuwpvbvnjupmn
+
+3. Секреты edge functions:
+
+```bash
+supabase secrets set \
+  CRON_SECRET=... \
+  TELEGRAM_BOT_TOKEN=... \
+  MINI_APP_URL=https://predictorwc2026bot.vercel.app \
+  --project-ref dlwpiikzuwpvbvnjupmn
 ```
+
+4. Vault secret:
+
+- `reminders_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/send-prediction-reminders`
+- `cron_secret` — тот же, что у `sync-live-matches`
+
+`MINI_APP_URL` — production URL Mini App (без trailing slash). Используется в inline-кнопке `web_app` → `/matches`.
 
 ## MCP (Cursor)
 

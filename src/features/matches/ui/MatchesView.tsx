@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Match } from "@/entities/match/model/types";
-import {
-  formatOutcomeShort,
-} from "@/entities/prediction/lib/formatOutcome";
+import { buildGroupStandings } from "@/entities/match/lib/standings";
+import type { Match, MatchEvent } from "@/entities/match/model/types";
+import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
+import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import { createClient } from "@/shared/lib/supabase/client";
+import { GroupStandingsList } from "@/features/matches/ui/GroupStandingsList";
 import { MatchDrawer } from "@/features/matches/ui/MatchDrawer";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,7 @@ interface MatchesViewProps {
   voterMap: Record<string, MatchVoterInfo>;
   predictionMap: Record<string, PredictionDetail>;
   predictionsByMatch: Record<string, MatchPredictionEntry[]>;
+  eventsByMatch: Record<string, MatchEvent[]>;
   currentUserId: string | null;
   teamColors: Record<string, string>;
   canPredict: boolean;
@@ -102,7 +104,10 @@ function MatchCenterFocus({
   finished,
   homeScore,
   awayScore,
+  homeTeamName,
+  awayTeamName,
   points,
+  liveMinute,
 }: {
   prediction: PredictionDetail | undefined;
   locked: boolean;
@@ -110,7 +115,10 @@ function MatchCenterFocus({
   finished: boolean;
   homeScore: number;
   awayScore: number;
+  homeTeamName: string;
+  awayTeamName: string;
   points: number | null;
+  liveMinute: string | null;
 }) {
   if (finished) {
     return (
@@ -140,8 +148,12 @@ function MatchCenterFocus({
     <div className="col-start-2 row-span-2 flex flex-col items-center justify-center gap-1.5 self-center">
       {prediction ? (
         <>
-          <p className="min-w-[2.75rem] text-center text-[17px] font-bold leading-none tabular-nums">
-            {formatOutcomeShort(prediction.outcome)}
+          <p className="max-w-[5.5rem] text-center text-[13px] font-semibold leading-tight line-clamp-2">
+            {formatOutcomeWins(
+              prediction.outcome,
+              homeTeamName,
+              awayTeamName,
+            )}
           </p>
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
             My pick
@@ -161,7 +173,7 @@ function MatchCenterFocus({
             {formatMatchScore(homeScore, awayScore)}
           </p>
           <span className="text-[9px] font-semibold uppercase tracking-wide text-red-300">
-            Live
+            {liveMinute ? `Live ${liveMinute}` : "Live"}
           </span>
         </div>
       )}
@@ -188,6 +200,7 @@ export function MatchesView({
   voterMap,
   predictionMap,
   predictionsByMatch,
+  eventsByMatch,
   currentUserId,
   teamColors,
   canPredict,
@@ -207,6 +220,11 @@ export function MatchesView({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "predictions" },
+        () => router.refresh(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "match_events" },
         () => router.refresh(),
       )
       .subscribe();
@@ -238,6 +256,16 @@ export function MatchesView({
       ? selectedMatchId
       : null;
   }, [filteredMatches, selectedMatchId]);
+
+  const groupStandings = useMemo(
+    () => buildGroupStandings(matches),
+    [matches],
+  );
+
+  const groupStandingsByName = useMemo(
+    () => Object.fromEntries(groupStandings.map((group) => [group.groupName, group])),
+    [groupStandings],
+  );
 
   const groupedByDate = useMemo(() => {
     const groups = new Map<string, Match[]>();
@@ -285,8 +313,8 @@ export function MatchesView({
   };
 
   return (
-    <div className="flex flex-col">
-      <div className="sports-panel sports-panel-max-h flex flex-col overflow-hidden">
+    <div className="flex flex-col animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
+      <div className="sports-panel corner-squircle sports-panel-max-h flex flex-col">
         <div
           className="flex shrink-0 border-b border-white/[0.08] px-3 pt-3 pb-2.5"
           role="tablist"
@@ -372,6 +400,7 @@ export function MatchesView({
                       (p) => p.user_id === currentUserId,
                     );
                     const points = finished ? (userPrediction?.points_awarded ?? null) : null;
+                    const liveMinute = formatLiveMinute(match.minute, match.injury_time);
 
                     return (
                       <button
@@ -415,7 +444,10 @@ export function MatchesView({
                             finished={finished}
                             homeScore={match.home_score ?? 0}
                             awayScore={match.away_score ?? 0}
+                            homeTeamName={match.home_team_name}
+                            awayTeamName={match.away_team_name}
                             points={points}
+                            liveMinute={liveMinute}
                           />
 
                           <div className="col-start-3 row-start-1 flex justify-center">
@@ -443,15 +475,19 @@ export function MatchesView({
         </div>
       </div>
 
+      <GroupStandingsList groups={groupStandings} />
+
       <MatchDrawer
         matches={filteredMatches}
         matchId={drawerMatchId}
         voterMap={voterMap}
         predictionMap={predictionMap}
         predictionsByMatch={predictionsByMatch}
+        eventsByMatch={eventsByMatch}
         currentUserId={currentUserId}
         teamColors={teamColors}
         canPredict={canPredict}
+        groupStandingsByName={groupStandingsByName}
         onMatchChange={handleMatchChange}
         onClose={closeMatch}
       />

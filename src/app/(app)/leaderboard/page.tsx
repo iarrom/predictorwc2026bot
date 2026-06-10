@@ -51,8 +51,8 @@ export default async function LeaderboardPage() {
   }));
 
   return (
-    <div className="flex flex-col">
-      <div className="sports-panel sports-panel-max-h flex flex-col overflow-hidden">
+    <div className="flex flex-col animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
+      <div className="sports-panel corner-squircle sports-panel-max-h flex flex-col">
         <div className="shrink-0 border-b border-white/[0.08] px-4 py-3">
           <h1 className="text-[15px] font-semibold text-foreground">Leaderboard</h1>
           <p className="mt-1 text-[11px] leading-snug text-muted-foreground">

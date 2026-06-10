@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { Match } from "@/entities/match/model/types";
+import type { GroupStanding } from "@/entities/match/lib/standings";
+import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
@@ -41,9 +42,11 @@ interface MatchDrawerProps {
   voterMap: Record<string, MatchVoterInfo>;
   predictionMap: Record<string, PredictionDetail>;
   predictionsByMatch: Record<string, MatchPredictionEntry[]>;
+  eventsByMatch: Record<string, MatchEvent[]>;
   currentUserId: string | null;
   teamColors: Record<string, string>;
   canPredict: boolean;
+  groupStandingsByName: Record<string, GroupStanding>;
   onMatchChange: (matchId: string) => void;
   onClose: () => void;
 }
@@ -54,9 +57,11 @@ export function MatchDrawer({
   voterMap,
   predictionMap,
   predictionsByMatch,
+  eventsByMatch,
   currentUserId,
   teamColors,
   canPredict,
+  groupStandingsByName,
   onMatchChange,
   onClose,
 }: MatchDrawerProps) {
@@ -144,11 +149,11 @@ export function MatchDrawer({
       modal
       shouldScaleBackground={false}
     >
-      <DrawerContent className="corner-squircle max-h-[92dvh] border-0 bg-transparent p-0 shadow-none before:hidden">
+      <DrawerContent className="mt-0 max-h-[92dvh] border-0 bg-transparent p-0 shadow-none before:hidden data-[vaul-drawer-direction=bottom]:mt-0">
         <DrawerTitle className="sr-only">Match details</DrawerTitle>
 
         {contentMounted ? (
-          <div className="corner-squircle flex flex-col pt-8 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
+          <div className="flex max-h-[inherit] flex-col overflow-hidden pt-8 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
             <Carousel
               setApi={setCarouselApi}
               opts={{
@@ -160,20 +165,25 @@ export function MatchDrawer({
               }}
               className="w-full"
             >
-              <CarouselContent className="ml-0 items-stretch" data-vaul-no-drag>
+              <CarouselContent
+                className="ml-0 items-stretch py-1"
+                data-vaul-no-drag
+              >
                 {matches.map((match, index) => (
                   <CarouselItem
                     key={match.id}
-                    className="flex basis-[90%] px-0.5"
+                    className="flex basis-[90%] px-1"
                   >
                     <MatchDrawerSlide
                       match={match}
                       voters={voterMap[match.id] ?? { count: 0, voters: [] }}
                       prediction={predictionMap[match.id]}
                       matchPredictions={predictionsByMatch[match.id] ?? []}
+                      matchEvents={eventsByMatch[match.id] ?? []}
                       currentUserId={currentUserId}
                       teamColors={teamColors}
                       canPredict={canPredict}
+                      groupStandingsByName={groupStandingsByName}
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}
                       distanceFromActive={Math.abs(index - snapIndex)}

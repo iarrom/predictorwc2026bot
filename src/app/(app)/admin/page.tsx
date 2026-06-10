@@ -21,7 +21,7 @@ export default async function AdminPage() {
     .limit(10);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 animate-in fade-in duration-300 fill-mode-both motion-reduce:animate-none">
       <div>
         <h1 className="text-xl font-bold">Admin</h1>
         <p className="mt-1 text-sm text-muted-foreground">

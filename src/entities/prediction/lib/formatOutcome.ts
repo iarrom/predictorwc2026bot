@@ -26,6 +26,21 @@ export function formatOutcomeLabel(
   }
 }
 
+export function formatOutcomeWins(
+  outcome: PredictionOutcome,
+  homeTeamName: string,
+  awayTeamName: string,
+): string {
+  switch (outcome) {
+    case "home":
+      return `${homeTeamName} wins`;
+    case "draw":
+      return "Draw";
+    case "away":
+      return `${awayTeamName} wins`;
+  }
+}
+
 export function getActualOutcome(
   homeScore: number,
   awayScore: number,
