@@ -12,6 +12,8 @@ import { setLocaleCookie } from "@/shared/lib/locale-cookie";
 import type { Locale } from "@/shared/types/database";
 
 const DEFAULT_DEV_TELEGRAM_ID = 169900085;
+/** Telegram initData TTL — webview keeps the same initData while in background */
+const INIT_DATA_EXPIRES_IN = 86400;
 
 function getEnv(name: string): string | null {
   const value = process.env[name];
@@ -174,10 +176,14 @@ export async function signInWithTelegram(
   }
 
   try {
-    validate(initDataRaw, botToken, { expiresIn: 3600 });
+    validate(initDataRaw, botToken, { expiresIn: INIT_DATA_EXPIRES_IN });
   } catch (e) {
+    const message = e instanceof Error ? e.message : "";
+    if (/expired/i.test(message)) {
+      return { error: t("expiredTelegramData") };
+    }
     return {
-      error: e instanceof Error ? e.message : t("invalidTelegramData"),
+      error: message || t("invalidTelegramData"),
     };
   }
 

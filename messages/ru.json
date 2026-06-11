@@ -24,6 +24,7 @@
       "missingBotToken": "Не настроен TELEGRAM_BOT_TOKEN",
       "missingAuthPepper": "Не настроен TELEGRAM_AUTH_PEPPER",
       "invalidTelegramData": "Некорректные данные Telegram",
+      "expiredTelegramData": "Сессия Telegram устарела — закройте и заново откройте приложение",
       "telegramUserNotFound": "Пользователь Telegram не найден в init data",
       "outsideTelegram": "outside_telegram",
       "invalidDevTelegramId": "Некорректный DEV_TELEGRAM_ID",

@@ -40,4 +40,4 @@ sequenceDiagram
 
 - Bot token никогда не попадает в клиент
 - Пароль Supabase детерминирован: `HMAC-SHA256(telegram_id, pepper)`
-- initData валидируется с `expiresIn: 3600`
+- initData валидируется с `expiresIn: 86400` (24 ч — webview не обновляет initData в фоне)

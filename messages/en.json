@@ -24,6 +24,7 @@
       "missingBotToken": "Missing TELEGRAM_BOT_TOKEN in server config",
       "missingAuthPepper": "Missing TELEGRAM_AUTH_PEPPER in server config",
       "invalidTelegramData": "Invalid Telegram data",
+      "expiredTelegramData": "Telegram session expired — close and reopen the app",
       "telegramUserNotFound": "Telegram user not found in init data",
       "outsideTelegram": "outside_telegram",
       "invalidDevTelegramId": "Invalid DEV_TELEGRAM_ID",

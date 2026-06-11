@@ -24,6 +24,7 @@
       "missingBotToken": "Brak TELEGRAM_BOT_TOKEN w konfiguracji",
       "missingAuthPepper": "Brak TELEGRAM_AUTH_PEPPER w konfiguracji",
       "invalidTelegramData": "Nieprawidłowe dane Telegram",
+      "expiredTelegramData": "Sesja Telegram wygasła — zamknij i otwórz aplikację ponownie",
       "telegramUserNotFound": "Nie znaleziono użytkownika Telegram w init data",
       "outsideTelegram": "outside_telegram",
       "invalidDevTelegramId": "Nieprawidłowy DEV_TELEGRAM_ID",
