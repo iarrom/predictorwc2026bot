@@ -129,7 +129,6 @@ function MatchCenterFocus({
   homeTeamName,
   awayTeamName,
   points,
-  liveMinute,
   outcomeMessages,
   t,
 }: {
@@ -142,7 +141,6 @@ function MatchCenterFocus({
   homeTeamName: string;
   awayTeamName: string;
   points: number | null;
-  liveMinute: string | null;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
@@ -209,14 +207,9 @@ function MatchCenterFocus({
       )}
 
       {live && (
-        <div className="flex items-center gap-1">
-          <p className="text-center text-[11px] font-medium leading-none tabular-nums text-muted-foreground">
-            {formatMatchScore(homeScore, awayScore)}
-          </p>
-          <span className="text-[9px] font-semibold uppercase tracking-wide text-red-300">
-            {liveMinute ? t("liveMinute", { minute: liveMinute }) : t("live")}
-          </span>
-        </div>
+        <p className="min-w-[2.75rem] text-center text-[17px] font-bold leading-none tabular-nums text-white">
+          {formatMatchScore(homeScore, awayScore)}
+        </p>
       )}
     </div>
   );
@@ -473,7 +466,6 @@ export function MatchesView({
                             homeTeamName={match.home_team_name}
                             awayTeamName={match.away_team_name}
                             points={points}
-                            liveMinute={liveMinute}
                             outcomeMessages={outcomeMessages}
                             t={t}
                           />

@@ -10,6 +10,7 @@ import {
   getCurrentUserId,
   isParticipant,
 } from "@/shared/lib/auth";
+import { LEADERBOARD_EXCLUDED_TELEGRAM_IDS } from "@/shared/lib/leaderboard";
 import { decryptPredictionRows } from "@/shared/lib/predictions-crypto";
 import { createClient } from "@/shared/lib/supabase/server";
 import {
@@ -41,6 +42,7 @@ export default async function MatchesPage() {
     { data: predictions },
     { data: allPredictions },
     { data: profiles },
+    { data: excludedProfiles },
     { data: teams },
     { data: matchEvents },
   ] = await Promise.all([
@@ -53,15 +55,25 @@ export default async function MatchesPage() {
     supabase
       .from("predictions")
       .select("match_id, user_id, outcome_encrypted, points_awarded"),
-    revealableMatchIds.size > 0
-      ? supabase.from("profiles").select("id, display_name, photo_url")
-      : Promise.resolve({ data: [] }),
+    supabase.from("profiles").select("id, display_name, photo_url"),
+    supabase
+      .from("profiles")
+      .select("id")
+      .in("telegram_id", [...LEADERBOARD_EXCLUDED_TELEGRAM_IDS]),
     supabase.from("teams").select("name, primary_color"),
     supabase
       .from("match_events")
       .select("*")
       .order("minute", { ascending: true }),
   ]);
+
+  const excludedUserIds = new Set(
+    (excludedProfiles ?? []).map((profile) => profile.id),
+  );
+
+  const publicPredictions = (allPredictions ?? []).filter(
+    (prediction) => !excludedUserIds.has(prediction.user_id),
+  );
 
   const predictionMap = Object.fromEntries(
     (predictions ?? []).flatMap((p) => {
@@ -90,13 +102,13 @@ export default async function MatchesPage() {
 
   const voterMap = Object.fromEntries(
     buildVoterMap(
-      (allPredictions ?? []).map((prediction) => ({
+      publicPredictions.map((prediction) => ({
         match_id: prediction.match_id,
       })),
     ),
   );
 
-  const revealablePredictions = (allPredictions ?? []).filter((prediction) =>
+  const revealablePredictions = publicPredictions.filter((prediction) =>
     revealableMatchIds.has(prediction.match_id),
   );
 

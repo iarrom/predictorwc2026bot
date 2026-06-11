@@ -1,5 +1,12 @@
 import type { Match } from "@/entities/match/model/types";
 
+export type TeamStandingLiveState = "winning" | "drawing" | "losing";
+
+export interface TeamStandingLive {
+  score: string;
+  state: TeamStandingLiveState;
+}
+
 export interface TeamStandingRow {
   teamName: string;
   played: number;
@@ -10,6 +17,7 @@ export interface TeamStandingRow {
   goalsAgainst: number;
   goalDifference: number;
   points: number;
+  live?: TeamStandingLive;
 }
 
 export interface GroupStanding {
@@ -58,6 +66,43 @@ function isFinishedWithScore(match: Match): boolean {
     match.home_score !== null &&
     match.away_score !== null
   );
+}
+
+function isLiveWithScore(match: Match): boolean {
+  return (
+    match.status === "live" &&
+    match.home_score !== null &&
+    match.away_score !== null
+  );
+}
+
+function isScoredGroupMatch(match: Match): boolean {
+  return isFinishedWithScore(match) || isLiveWithScore(match);
+}
+
+function getLiveState(
+  teamScore: number,
+  opponentScore: number,
+): TeamStandingLiveState {
+  if (teamScore > opponentScore) {
+    return "winning";
+  }
+
+  if (teamScore < opponentScore) {
+    return "losing";
+  }
+
+  return "drawing";
+}
+
+function toLiveInfo(
+  teamScore: number,
+  opponentScore: number,
+): TeamStandingLive {
+  return {
+    score: `${teamScore}:${opponentScore}`,
+    state: getLiveState(teamScore, opponentScore),
+  };
 }
 
 function applyMatchResult(
@@ -125,6 +170,7 @@ function compareStandingRows(a: TeamStandingRow, b: TeamStandingRow): number {
 export function buildGroupStandings(matches: Match[]): GroupStanding[] {
   const groupMatches = matches.filter(isGroupMatch);
   const groups = new Map<string, Map<string, TeamStats>>();
+  const liveByGroup = new Map<string, Map<string, TeamStandingLive>>();
 
   for (const match of groupMatches) {
     const groupName = match.group_name!;
@@ -144,7 +190,7 @@ export function buildGroupStandings(matches: Match[]): GroupStanding[] {
       );
     }
 
-    if (isFinishedWithScore(match)) {
+    if (isScoredGroupMatch(match)) {
       applyMatchResult(
         statsByTeam,
         match.home_team_name,
@@ -154,15 +200,40 @@ export function buildGroupStandings(matches: Match[]): GroupStanding[] {
       );
     }
 
+    if (isLiveWithScore(match)) {
+      const liveByTeam =
+        liveByGroup.get(groupName) ?? new Map<string, TeamStandingLive>();
+
+      liveByTeam.set(
+        match.home_team_name,
+        toLiveInfo(match.home_score!, match.away_score!),
+      );
+      liveByTeam.set(
+        match.away_team_name,
+        toLiveInfo(match.away_score!, match.home_score!),
+      );
+
+      liveByGroup.set(groupName, liveByTeam);
+    }
+
     groups.set(groupName, statsByTeam);
   }
 
   return [...groups.entries()]
-    .map(([groupName, statsByTeam]) => ({
-      groupName,
-      rows: [...statsByTeam.values()]
-        .map(toStandingRow)
-        .sort(compareStandingRows),
-    }))
+    .map(([groupName, statsByTeam]) => {
+      const liveByTeam = liveByGroup.get(groupName);
+
+      return {
+        groupName,
+        rows: [...statsByTeam.values()]
+          .map((stats) => {
+            const row = toStandingRow(stats);
+            const live = liveByTeam?.get(stats.teamName);
+
+            return live ? { ...row, live } : row;
+          })
+          .sort(compareStandingRows),
+      };
+    })
     .sort((a, b) => getGroupSortKey(a.groupName) - getGroupSortKey(b.groupName));
 }

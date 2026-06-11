@@ -115,26 +115,25 @@ function MatchDetailCenterFocus({
       )}
 
       {showScore && (
-        <div className="flex items-center gap-1.5">
-          <p className="text-sm font-medium leading-none tabular-nums text-white/70">
-            {formatMatchScore(homeScore, awayScore)}
-          </p>
-          {live && (
-            <Badge
-              variant="destructive"
-              className="h-5 rounded-md border-0 bg-red-500/20 px-2 text-[10px] font-semibold text-red-300"
-            >
-              {liveMinute ? t("liveMinute", { minute: liveMinute }) : t("live")}
-            </Badge>
-          )}
-        </div>
+        <p className="text-2xl font-bold leading-none tabular-nums text-white">
+          {formatMatchScore(homeScore, awayScore)}
+        </p>
       )}
 
-      <p className="text-center text-[11px] text-white/70">
-        {formatMatchTime(kickoffAt, locale)}
-        <span className="mx-1 text-white/35">·</span>
-        {formatMatchKickoffDate(kickoffAt, locale)}
-      </p>
+      {live ? (
+        <Badge
+          variant="destructive"
+          className="h-5 rounded-md border-0 bg-red-500/20 px-2 text-[10px] font-semibold text-red-300"
+        >
+          {liveMinute ? t("liveMinute", { minute: liveMinute }) : t("live")}
+        </Badge>
+      ) : (
+        <p className="text-center text-[11px] text-white/70">
+          {formatMatchTime(kickoffAt, locale)}
+          <span className="mx-1 text-white/35">·</span>
+          {formatMatchKickoffDate(kickoffAt, locale)}
+        </p>
+      )}
     </div>
   );
 }

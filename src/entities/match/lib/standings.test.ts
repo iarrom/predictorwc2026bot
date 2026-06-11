@@ -145,6 +145,134 @@ describe("buildGroupStandings", () => {
     ]);
   });
 
+  it("includes live matches in standings and exposes live chip info", () => {
+    const matches = [
+      makeMatch({
+        id: "1",
+        external_key: "1",
+        home_team_name: "Mexico",
+        away_team_name: "South Africa",
+        status: "finished",
+        home_score: 2,
+        away_score: 0,
+      }),
+      makeMatch({
+        id: "2",
+        external_key: "2",
+        home_team_name: "South Korea",
+        away_team_name: "Czech Republic",
+        status: "live",
+        home_score: 1,
+        away_score: 0,
+      }),
+      makeMatch({
+        id: "3",
+        external_key: "3",
+        home_team_name: "Mexico",
+        away_team_name: "South Korea",
+      }),
+      makeMatch({
+        id: "4",
+        external_key: "4",
+        home_team_name: "Czech Republic",
+        away_team_name: "South Africa",
+      }),
+    ];
+
+    const [groupA] = buildGroupStandings(matches);
+
+    expect(groupA.rows.map((row) => row.teamName)).toEqual([
+      "Mexico",
+      "South Korea",
+      "Czech Republic",
+      "South Africa",
+    ]);
+
+    expect(groupA.rows[0]).toMatchObject({
+      teamName: "Mexico",
+      played: 1,
+      won: 1,
+      points: 3,
+    });
+
+    expect(groupA.rows[1]).toMatchObject({
+      teamName: "South Korea",
+      played: 1,
+      won: 1,
+      points: 3,
+      live: { score: "1:0", state: "winning" },
+    });
+
+    expect(groupA.rows[2]).toMatchObject({
+      teamName: "Czech Republic",
+      played: 1,
+      lost: 1,
+      points: 0,
+      live: { score: "0:1", state: "losing" },
+    });
+  });
+
+  it("marks drawing live matches as neutral state", () => {
+    const matches = [
+      makeMatch({
+        id: "1",
+        external_key: "1",
+        home_team_name: "Mexico",
+        away_team_name: "South Africa",
+        status: "live",
+        home_score: 1,
+        away_score: 1,
+      }),
+      makeMatch({
+        id: "2",
+        external_key: "2",
+        home_team_name: "South Korea",
+        away_team_name: "Czech Republic",
+      }),
+    ];
+
+    const [groupA] = buildGroupStandings(matches);
+
+    expect(groupA.rows.find((row) => row.teamName === "Mexico")).toMatchObject({
+      played: 1,
+      drawn: 1,
+      points: 1,
+      live: { score: "1:1", state: "drawing" },
+    });
+
+    expect(
+      groupA.rows.find((row) => row.teamName === "South Africa"),
+    ).toMatchObject({
+      live: { score: "1:1", state: "drawing" },
+    });
+  });
+
+  it("ignores live matches without score", () => {
+    const matches = [
+      makeMatch({
+        id: "1",
+        external_key: "1",
+        home_team_name: "Mexico",
+        away_team_name: "South Africa",
+        status: "live",
+        home_score: null,
+        away_score: null,
+      }),
+      makeMatch({
+        id: "2",
+        external_key: "2",
+        home_team_name: "South Korea",
+        away_team_name: "Czech Republic",
+      }),
+    ];
+
+    const [groupA] = buildGroupStandings(matches);
+
+    expect(groupA.rows.every((row) => row.played === 0 && row.live == null)).toBe(
+      true,
+    );
+  });
+
   it("ignores non-group matches", () => {
     const matches = [
       makeMatch({ id: "1", external_key: "1", home_team_name: "Mexico", away_team_name: "South Africa" }),

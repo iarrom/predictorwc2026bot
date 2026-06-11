@@ -360,6 +360,13 @@ function needsLineupFallback(fdMatch: FdMatch): boolean {
   return false;
 }
 
+function needsDetailFetch(fdMatch: FdMatch): boolean {
+  const status = mapFdStatus(fdMatch.status);
+  // Goals, cards and subs are only present on the match detail endpoint.
+  if (status === "live" || status === "finished") return true;
+  return needsLineupFallback(fdMatch);
+}
+
 Deno.serve(async (req) => {
   const cronSecret = Deno.env.get("CRON_SECRET");
   const fdToken = Deno.env.get("FOOTBALL_DATA_TOKEN");
@@ -423,7 +430,17 @@ Deno.serve(async (req) => {
     let eventsUpserted = 0;
     let detailFetches = 0;
 
-    for (const fdMatch of fdMatches) {
+    const sortedFdMatches = [...fdMatches].sort((a, b) => {
+      const priority = (match: FdMatch) => {
+        const status = mapFdStatus(match.status);
+        if (status === "live") return 0;
+        if (status === "finished") return 1;
+        return 2;
+      };
+      return priority(a) - priority(b);
+    });
+
+    for (const fdMatch of sortedFdMatches) {
       const dbMatch = findDbMatch(fdMatch, (dbMatches ?? []) as DbMatch[]);
       if (!dbMatch) {
         skipped++;
@@ -432,53 +449,58 @@ Deno.serve(async (req) => {
 
       let effectiveMatch = fdMatch;
 
-      if (needsLineupFallback(fdMatch) && detailFetches < 5) {
-        try {
-          effectiveMatch = await fetchFdMatchDetail(fdToken, fdMatch.id);
-          detailFetches++;
-        } catch (detailError) {
-          console.warn("Lineup detail fetch failed", fdMatch.id, detailError);
+      if (needsDetailFetch(fdMatch)) {
+        const status = mapFdStatus(fdMatch.status);
+        const canFetchDetail = status === "live" || detailFetches < 5;
+        if (canFetchDetail) {
+          try {
+            effectiveMatch = await fetchFdMatchDetail(fdToken, fdMatch.id);
+            if (status !== "live") {
+              detailFetches++;
+            }
+          } catch (detailError) {
+            console.warn("Match detail fetch failed", fdMatch.id, detailError);
+          }
         }
       }
 
-      if (
+      const lastUpdatedUnchanged =
         dbMatch.fd_last_updated &&
-        dbMatch.fd_last_updated === effectiveMatch.lastUpdated
-      ) {
-        skipped++;
-        continue;
-      }
-
-      const homeLineup = buildLineupPayload(effectiveMatch.homeTeam);
-      const awayLineup = buildLineupPayload(effectiveMatch.awayTeam);
-      const status = mapFdStatus(effectiveMatch.status);
-
-      const updatePayload: Record<string, unknown> = {
-        fd_match_id: effectiveMatch.id,
-        status,
-        fd_status: effectiveMatch.status,
-        fd_last_updated: effectiveMatch.lastUpdated,
-        minute: effectiveMatch.minute,
-        injury_time: effectiveMatch.injuryTime,
-        home_score: effectiveMatch.score.fullTime.home,
-        away_score: effectiveMatch.score.fullTime.away,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (homeLineup) updatePayload.home_lineup = homeLineup;
-      if (awayLineup) updatePayload.away_lineup = awayLineup;
-
-      const { error: updateError } = await supabase
-        .from("matches")
-        .update(updatePayload)
-        .eq("id", dbMatch.id);
-
-      if (updateError) {
-        console.error("Match update failed", dbMatch.id, updateError);
-        continue;
-      }
+        dbMatch.fd_last_updated === effectiveMatch.lastUpdated;
 
       const events = buildEvents(dbMatch.id, effectiveMatch);
+
+      if (!lastUpdatedUnchanged) {
+        const homeLineup = buildLineupPayload(effectiveMatch.homeTeam);
+        const awayLineup = buildLineupPayload(effectiveMatch.awayTeam);
+        const status = mapFdStatus(effectiveMatch.status);
+
+        const updatePayload: Record<string, unknown> = {
+          fd_match_id: effectiveMatch.id,
+          status,
+          fd_status: effectiveMatch.status,
+          fd_last_updated: effectiveMatch.lastUpdated,
+          minute: effectiveMatch.minute,
+          injury_time: effectiveMatch.injuryTime,
+          home_score: effectiveMatch.score.fullTime.home,
+          away_score: effectiveMatch.score.fullTime.away,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (homeLineup) updatePayload.home_lineup = homeLineup;
+        if (awayLineup) updatePayload.away_lineup = awayLineup;
+
+        const { error: updateError } = await supabase
+          .from("matches")
+          .update(updatePayload)
+          .eq("id", dbMatch.id);
+
+        if (updateError) {
+          console.error("Match update failed", dbMatch.id, updateError);
+          continue;
+        }
+      }
+
       if (events.length > 0) {
         const { error: eventsError } = await supabase
           .from("match_events")
@@ -489,6 +511,11 @@ Deno.serve(async (req) => {
         } else {
           eventsUpserted += events.length;
         }
+      }
+
+      if (lastUpdatedUnchanged && events.length === 0) {
+        skipped++;
+        continue;
       }
 
       updated++;

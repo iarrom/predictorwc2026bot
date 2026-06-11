@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import type {
   GroupStanding,
+  TeamStandingLiveState,
   TeamStandingRow,
 } from "@/entities/match/lib/standings";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
@@ -20,6 +21,25 @@ function formatGoalDifference(value: number): string {
   }
 
   return String(value);
+}
+
+const LIVE_CHIP_CLASS: Record<TeamStandingLiveState, string> = {
+  winning: "bg-emerald-500/20 text-emerald-400",
+  drawing: "bg-white/10 text-muted-foreground",
+  losing: "bg-red-500/20 text-red-400",
+};
+
+function LiveScoreChip({ score, state }: { score: string; state: TeamStandingLiveState }) {
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold leading-none tabular-nums",
+        LIVE_CHIP_CLASS[state],
+      )}
+    >
+      {score}
+    </span>
+  );
 }
 
 function StandingStat({
@@ -64,8 +84,13 @@ function StandingRow({
 
       <TeamFlag name={row.teamName} size={FLAG_SIZE} />
 
-      <span className="truncate text-[11px] font-medium leading-tight text-foreground">
-        {row.teamName}
+      <span className="flex min-w-0 items-center gap-1">
+        <span className="truncate text-[11px] font-medium leading-tight text-foreground">
+          {row.teamName}
+        </span>
+        {row.live ? (
+          <LiveScoreChip score={row.live.score} state={row.live.state} />
+        ) : null}
       </span>
 
       <StandingStat value={row.played} />
