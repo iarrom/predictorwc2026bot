@@ -341,12 +341,23 @@ async function fetchFdMatchDetail(
   return await response.json();
 }
 
+const PREMATCH_LINEUP_WINDOW_MS = 75 * 60 * 1000;
+
 function needsLineupFallback(fdMatch: FdMatch): boolean {
-  const status = mapFdStatus(fdMatch.status);
-  if (status !== "live") return false;
   const homeEmpty = (fdMatch.homeTeam.lineup ?? []).length === 0;
   const awayEmpty = (fdMatch.awayTeam.lineup ?? []).length === 0;
-  return homeEmpty || awayEmpty;
+  if (!homeEmpty && !awayEmpty) return false;
+
+  const status = mapFdStatus(fdMatch.status);
+  if (status === "live") return true;
+
+  if (status === "scheduled") {
+    const kickoffMs = new Date(fdMatch.utcDate).getTime();
+    const msUntilKickoff = kickoffMs - Date.now();
+    return msUntilKickoff > 0 && msUntilKickoff <= PREMATCH_LINEUP_WINDOW_MS;
+  }
+
+  return false;
 }
 
 Deno.serve(async (req) => {

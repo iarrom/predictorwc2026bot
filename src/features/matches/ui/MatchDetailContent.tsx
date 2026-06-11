@@ -12,6 +12,7 @@ import {
   type PredictionDetail,
 } from "@/features/matches/lib/predictionDetail";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { shouldRevealMatchPredictions } from "@/features/matches/lib/shouldRevealMatchPredictions";
 import { GroupStandingsCard } from "@/features/matches/ui/GroupStandingsList";
 import { MatchEventsTimeline } from "@/features/matches/ui/MatchEventsTimeline";
@@ -89,7 +90,17 @@ function MatchDetailCenterFocus({
   return (
     <div className="col-start-2 row-span-2 flex min-w-20 flex-col items-center justify-center gap-1 self-center">
       {prediction ? (
-        <p className="line-clamp-2 text-center text-lg font-bold leading-tight text-white">
+        <p
+          className={cn(
+            "line-clamp-2 text-center text-lg font-bold leading-tight text-white",
+            livePredictionTextClass(
+              live,
+              prediction.outcome,
+              homeScore,
+              awayScore,
+            ),
+          )}
+        >
           {formatOutcomeWins(
             prediction.outcome,
             homeTeamName,
@@ -132,6 +143,9 @@ function LockedPredictionSummary({
   prediction,
   homeTeamName,
   awayTeamName,
+  live,
+  homeScore,
+  awayScore,
   finished,
   outcomeMessages,
   t,
@@ -139,6 +153,9 @@ function LockedPredictionSummary({
   prediction: PredictionDetail | undefined;
   homeTeamName: string;
   awayTeamName: string;
+  live: boolean;
+  homeScore: number;
+  awayScore: number;
   finished: boolean;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
   t: ReturnType<typeof useTranslations<"matches">>;
@@ -151,7 +168,17 @@ function LockedPredictionSummary({
 
   return (
     <div className="flex flex-col gap-2">
-      <p className="text-lg font-bold leading-tight text-white">
+      <p
+        className={cn(
+          "text-lg font-bold leading-tight text-white",
+          livePredictionTextClass(
+            live,
+            prediction.outcome,
+            homeScore,
+            awayScore,
+          ),
+        )}
+      >
         {formatOutcomeWins(
           prediction.outcome,
           homeTeamName,
@@ -308,6 +335,9 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                     prediction={prediction}
                     homeTeamName={match.home_team_name}
                     awayTeamName={match.away_team_name}
+                    live={live}
+                    homeScore={match.home_score ?? 0}
+                    awayScore={match.away_score ?? 0}
                     finished={finished}
                     outcomeMessages={outcomeMessages}
                     t={t}

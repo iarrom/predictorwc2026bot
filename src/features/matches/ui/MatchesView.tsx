@@ -28,6 +28,7 @@ import {
   getMatchDayBucket,
   type MatchDayBucket,
 } from "@/shared/lib/formatDate";
+import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { formatMatchScore } from "@/shared/lib/formatMatchScore";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
@@ -83,10 +84,31 @@ function toggleCollapsed(
 function MatchTimeBadge({
   kickoffAt,
   locale,
+  live,
+  liveMinute,
+  t,
 }: {
   kickoffAt: string;
   locale: Locale;
+  live: boolean;
+  liveMinute: string | null;
+  t: ReturnType<typeof useTranslations<"matches">>;
 }) {
+  if (live) {
+    return (
+      <Badge
+        variant="secondary"
+        className="h-4 shrink-0 rounded-md border-0 bg-red-500/15 px-1.5 text-[10px] font-semibold text-red-300 tabular-nums"
+      >
+        <span
+          aria-hidden
+          className="size-1.5 shrink-0 rounded-full bg-red-400 motion-safe:animate-pulse"
+        />
+        {liveMinute ?? t("live")}
+      </Badge>
+    );
+  }
+
   return (
     <Badge
       variant="secondary"
@@ -154,7 +176,17 @@ function MatchCenterFocus({
     <div className="col-start-2 row-start-1 flex flex-col items-center justify-center gap-1.5 self-center">
       {prediction ? (
         <>
-          <p className="max-w-[5.5rem] text-center text-[13px] font-semibold leading-tight line-clamp-2">
+          <p
+            className={cn(
+              "max-w-[5.5rem] text-center text-[13px] font-semibold leading-tight line-clamp-2",
+              livePredictionTextClass(
+                live,
+                prediction.outcome,
+                homeScore,
+                awayScore,
+              ),
+            )}
+          >
             {formatOutcomeWins(
               prediction.outcome,
               homeTeamName,
@@ -413,7 +445,13 @@ export function MatchesView({
                           </p>
 
                           <div className="flex min-w-0 items-center justify-end">
-                            <MatchTimeBadge kickoffAt={match.kickoff_at} locale={locale} />
+                            <MatchTimeBadge
+                              kickoffAt={match.kickoff_at}
+                              locale={locale}
+                              live={live}
+                              liveMinute={liveMinute}
+                              t={t}
+                            />
                           </div>
                         </div>
 

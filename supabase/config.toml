@@ -8,3 +8,12 @@ port = 54321
 [db]
 port = 54322
 major_version = 15
+
+[functions.sync-live-matches]
+verify_jwt = false
+
+[functions.send-goal-notifications]
+verify_jwt = false
+
+[functions.send-prediction-reminders]
+verify_jwt = false
