@@ -397,13 +397,13 @@ export function MatchesView({
                         onClick={() => openMatch(match.id)}
                         aria-pressed={isSelected}
                         className={cn(
-                          "flex w-full flex-col justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
+                          "flex w-full flex-col items-stretch justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
                           MATCH_CARD_MIN_H,
                           "border-t border-white/[0.08]",
                           isSelected && "bg-white/[0.05]",
                         )}
                       >
-                        <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
+                        <div className="mb-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-2">
                           <div className="flex min-w-0 items-center justify-start">
                             <MatchVoters voters={voters} compact />
                           </div>
@@ -417,7 +417,7 @@ export function MatchesView({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_minmax(2rem,auto)] items-start gap-x-2 gap-y-0.5">
+                        <div className="grid w-full grid-cols-[1fr_auto_1fr] grid-rows-[auto_minmax(2rem,auto)] items-start gap-x-2 gap-y-0.5">
                           <div className="col-start-1 row-start-1 flex justify-center">
                             <TeamFlag
                               name={match.home_team_name}

@@ -1,6 +1,37 @@
 import type { Locale } from "@/shared/types/database";
 import { defaultLocale, toIntlLocale } from "@/i18n/config";
 
+function datePart(
+  parts: Intl.DateTimeFormatPart[],
+  type: Intl.DateTimeFormatPartTypes,
+): string {
+  return parts.find((part) => part.type === type)?.value ?? "";
+}
+
+/** Assembles weekday + day + month without ICU literal separators (SSR/client-safe). */
+function formatWeekdayDayMonth(
+  iso: string,
+  locale: Locale,
+): string {
+  const parts = new Intl.DateTimeFormat(toIntlLocale(locale), {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).formatToParts(new Date(iso));
+
+  const weekday = datePart(parts, "weekday");
+  const month = datePart(parts, "month");
+  const day = datePart(parts, "day");
+
+  switch (locale) {
+    case "ru":
+    case "pl":
+      return `${weekday}, ${day} ${month}`;
+    default:
+      return `${weekday} ${day} ${month}`;
+  }
+}
+
 export function formatKickoff(iso: string, locale: Locale = defaultLocale): string {
   return new Intl.DateTimeFormat(toIntlLocale(locale), {
     weekday: "short",
@@ -20,19 +51,11 @@ export function formatMatchTime(iso: string, locale: Locale = defaultLocale): st
 }
 
 export function formatMatchDateHeader(iso: string, locale: Locale = defaultLocale): string {
-  return new Intl.DateTimeFormat(toIntlLocale(locale), {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(iso));
+  return formatWeekdayDayMonth(iso, locale);
 }
 
 export function formatMatchKickoffDate(iso: string, locale: Locale = defaultLocale): string {
-  return new Intl.DateTimeFormat(toIntlLocale(locale), {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  }).format(new Date(iso));
+  return formatWeekdayDayMonth(iso, locale);
 }
 
 export function getLocalDayStart(date: Date): Date {

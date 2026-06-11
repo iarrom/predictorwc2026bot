@@ -111,27 +111,29 @@ export function TiebreakerView({
                     }
                   }}
                   className={cn(
-                    "grid w-full grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-x-3 border-t border-white/[0.08] px-4 py-3 text-left transition-colors",
+                    "block w-full border-t border-white/[0.08] px-4 py-3 text-left transition-colors",
                     interactive
                       ? "cursor-pointer hover:bg-white/[0.03] active:bg-white/[0.05]"
                       : "cursor-default",
                   )}
                 >
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-medium leading-tight text-foreground">
-                      {t(`rounds.${round.roundKey}`)}
+                  <div className="grid grid-cols-[minmax(0,1fr)_4.5rem] items-center gap-x-3">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium leading-tight text-foreground">
+                        {t(`rounds.${round.roundKey}`)}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
+                        {formatTiebreakerMatchCount(
+                          round.matchCount,
+                          matchCountMessages,
+                        )}
+                      </p>
+                      <RoundStatus round={round} locale={locale} t={t} />
+                    </div>
+                    <p className="text-right text-[17px] font-bold leading-none tabular-nums text-foreground">
+                      {round.goals ?? "—"}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      {formatTiebreakerMatchCount(
-                        round.matchCount,
-                        matchCountMessages,
-                      )}
-                    </p>
-                    <RoundStatus round={round} locale={locale} t={t} />
                   </div>
-                  <p className="text-right text-[17px] font-bold leading-none tabular-nums text-foreground">
-                    {round.goals ?? "—"}
-                  </p>
                 </button>
               );
             })}
