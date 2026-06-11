@@ -201,28 +201,68 @@ function slug(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+function compareGoalOrder(a: FdGoal, b: FdGoal): number {
+  const minuteDiff = a.minute - b.minute;
+  if (minuteDiff !== 0) return minuteDiff;
+  return (a.injuryTime ?? 0) - (b.injuryTime ?? 0);
+}
+
+function applyGoalToRunningScore(
+  runningHome: number,
+  runningAway: number,
+  side: "home" | "away",
+  type: string,
+): { home: number; away: number } {
+  if (type === "own_goal") {
+    if (side === "home") {
+      return { home: runningHome, away: runningAway + 1 };
+    }
+    return { home: runningHome + 1, away: runningAway };
+  }
+
+  if (side === "home") {
+    return { home: runningHome + 1, away: runningAway };
+  }
+
+  return { home: runningHome, away: runningAway + 1 };
+}
+
 function buildEvents(
   matchId: string,
   fdMatch: FdMatch,
 ): MatchEventRow[] {
   const events: MatchEventRow[] = [];
 
-  for (const goal of fdMatch.goals ?? []) {
+  const goals = [...(fdMatch.goals ?? [])].sort(compareGoalOrder);
+  let runningHome = 0;
+  let runningAway = 0;
+
+  for (const goal of goals) {
     const side = teamSide(goal.team.name, fdMatch.homeTeam, fdMatch.awayTeam);
     const player = goal.scorer?.name ?? "Unknown";
-    const scoreHome = goal.score?.home ?? null;
-    const scoreAway = goal.score?.away ?? null;
+    const type = goalEventType(goal.type);
+    const fdScoreHome = goal.score?.home ?? null;
+    const fdScoreAway = goal.score?.away ?? null;
+    const runningScore = applyGoalToRunningScore(
+      runningHome,
+      runningAway,
+      side,
+      type,
+    );
+    runningHome = runningScore.home;
+    runningAway = runningScore.away;
+
     events.push({
       match_id: matchId,
-      event_key: `goal-${goal.minute}-${goal.injuryTime ?? 0}-${slug(player)}-${scoreHome ?? "x"}-${scoreAway ?? "x"}`,
-      type: goalEventType(goal.type),
+      event_key: `goal-${goal.minute}-${goal.injuryTime ?? 0}-${slug(player)}-${fdScoreHome ?? "x"}-${fdScoreAway ?? "x"}`,
+      type,
       minute: goal.minute,
       injury_time: goal.injuryTime ?? null,
       side,
       player_name: player,
       secondary_player_name: goal.assist?.name ?? null,
-      score_home: scoreHome,
-      score_away: scoreAway,
+      score_home: runningHome,
+      score_away: runningAway,
       payload: goal as unknown as Record<string, unknown>,
     });
   }
