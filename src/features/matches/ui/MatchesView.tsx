@@ -53,6 +53,8 @@ const TAB_KEYS: MatchDayBucket[] = ["past", "upcoming3days", "future"];
 
 const FLAG_SIZE = 28;
 const MATCH_CARD_MIN_H = "min-h-[7rem]";
+const matchCardGridClassName =
+  "grid w-full grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-start gap-x-2";
 
 function getDefaultTab(matches: Match[]): MatchDayBucket {
   if (
@@ -146,8 +148,8 @@ function MatchCenterFocus({
 }) {
   if (finished) {
     return (
-      <div className="col-start-2 row-start-1 flex flex-col items-center justify-center gap-1.5 self-center">
-        <p className="min-w-[2.75rem] text-center text-[17px] font-bold leading-none tabular-nums">
+      <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1.5 self-center">
+        <p className="w-full text-center text-[17px] font-bold leading-none tabular-nums">
           {formatMatchScore(homeScore, awayScore)}
         </p>
         {prediction ? (
@@ -171,12 +173,12 @@ function MatchCenterFocus({
   }
 
   return (
-    <div className="col-start-2 row-start-1 flex flex-col items-center justify-center gap-1.5 self-center">
+    <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1.5 self-center">
       {prediction ? (
         <>
           <p
             className={cn(
-              "max-w-[5.5rem] text-center text-[13px] font-semibold leading-tight line-clamp-2",
+              "w-full truncate text-center text-[13px] font-semibold leading-tight",
               livePredictionTextClass(
                 live,
                 prediction.outcome,
@@ -207,7 +209,7 @@ function MatchCenterFocus({
       )}
 
       {live && (
-        <p className="min-w-[2.75rem] text-center text-[17px] font-bold leading-none tabular-nums text-white">
+        <p className="w-full text-center text-[17px] font-bold leading-none tabular-nums text-white">
           {formatMatchScore(homeScore, awayScore)}
         </p>
       )}
@@ -448,12 +450,15 @@ export function MatchesView({
                           </div>
                         </div>
 
-                        <div className="grid w-full grid-cols-[1fr_auto_1fr] grid-rows-[auto_minmax(2rem,auto)] items-start gap-x-2 gap-y-0.5">
-                          <div className="col-start-1 row-start-1 flex justify-center">
+                        <div className={matchCardGridClassName}>
+                          <div className="flex min-w-0 flex-col items-center gap-1.5">
                             <TeamFlag
                               name={match.home_team_name}
                               size={FLAG_SIZE}
                             />
+                            <p className="line-clamp-2 w-full text-center text-[11px] font-medium leading-tight">
+                              {match.home_team_name}
+                            </p>
                           </div>
 
                           <MatchCenterFocus
@@ -470,20 +475,15 @@ export function MatchesView({
                             t={t}
                           />
 
-                          <div className="col-start-3 row-start-1 flex justify-center">
+                          <div className="flex min-w-0 flex-col items-center gap-1.5">
                             <TeamFlag
                               name={match.away_team_name}
                               size={FLAG_SIZE}
                             />
+                            <p className="line-clamp-2 w-full text-center text-[11px] font-medium leading-tight">
+                              {match.away_team_name}
+                            </p>
                           </div>
-
-                          <p className="col-start-1 row-start-2 self-start line-clamp-2 text-center text-[11px] font-medium leading-tight">
-                            {match.home_team_name}
-                          </p>
-
-                          <p className="col-start-3 row-start-2 self-start line-clamp-2 text-center text-[11px] font-medium leading-tight">
-                            {match.away_team_name}
-                          </p>
                         </div>
                       </button>
                     );

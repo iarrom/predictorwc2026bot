@@ -74,7 +74,6 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
               ? groupStandingsByName[match.group_name]
               : undefined
           }
-          isActive={isActive}
           expanded={expanded}
           onRequestExpand={onRequestExpand}
         />

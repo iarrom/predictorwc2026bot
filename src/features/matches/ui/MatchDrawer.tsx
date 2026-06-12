@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 
-const PRELOAD_RADIUS = 2;
+const PRELOAD_RADIUS = 1;
 // First snap reveals header + prediction + tab bar; second is full-screen scroll.
 const COLLAPSED_SNAP = 0.72;
 const EXPANDED_SNAP = 1;

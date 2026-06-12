@@ -141,7 +141,7 @@ export function LeaderboardPositionChart({
               ? entry.display_name
               : tMatches("playerRank", { rank: entry.rank }),
           displayName: entry.display_name,
-          photoUrl: canSeePlayerNames || isCurrentUser ? entry.photo_url : null,
+          photoUrl: isCurrentUser ? entry.photo_url : null,
           color: buildPlayerColor(index, isCurrentUser),
           isCurrentUser,
         };
@@ -277,9 +277,7 @@ export function LeaderboardPositionChart({
                   dot={renderEndAvatar(meta, lastIndex)}
                   activeDot={{ r: meta.isCurrentUser ? 5 : 3.5 }}
                   connectNulls
-                  isAnimationActive
-                  animationDuration={650}
-                  animationEasing="ease-out"
+                  isAnimationActive={false}
                 />
               ))}
             </LineChart>

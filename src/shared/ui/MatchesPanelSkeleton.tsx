@@ -8,13 +8,16 @@ function MatchRowSkeleton() {
         <Skeleton className="h-3 w-24 rounded-md" />
         <Skeleton className="ml-auto h-4 w-10 rounded-md" />
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_auto] items-center gap-x-2 gap-y-1.5">
-        <Skeleton className="mx-auto size-7 rounded-full" />
-        <Skeleton className="mx-auto h-5 w-12 rounded-md" />
-        <Skeleton className="mx-auto size-7 rounded-full" />
-        <Skeleton className="mx-auto h-3 w-16 rounded-md" />
-        <div />
-        <Skeleton className="mx-auto h-3 w-16 rounded-md" />
+      <div className="grid w-full grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-start gap-x-2">
+        <div className="flex flex-col items-center gap-1.5">
+          <Skeleton className="size-7 rounded-full" />
+          <Skeleton className="h-3 w-16 rounded-md" />
+        </div>
+        <Skeleton className="mx-auto h-5 w-12 self-center rounded-md" />
+        <div className="flex flex-col items-center gap-1.5">
+          <Skeleton className="size-7 rounded-full" />
+          <Skeleton className="h-3 w-16 rounded-md" />
+        </div>
       </div>
     </div>
   );

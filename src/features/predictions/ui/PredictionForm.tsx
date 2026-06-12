@@ -39,7 +39,7 @@ function PredictionSummary({
   t: ReturnType<typeof useTranslations<"predictions">>;
 }) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col justify-between gap-4">
+    <div className="flex w-full min-h-0 flex-1 flex-col justify-between gap-4">
       <div className="flex flex-col gap-1 text-center">
         <p className="text-lg font-bold leading-tight text-white">
           {formatOutcomeWins(outcome, homeTeamName, awayTeamName, outcomeMessages)}
@@ -137,7 +137,7 @@ export function PredictionForm({
   return (
     <form
       action={action}
-      className="flex min-h-0 flex-1 flex-col justify-between gap-4"
+      className="flex w-full min-h-0 flex-1 flex-col justify-between gap-4"
     >
       <input type="hidden" name="match_id" value={matchId} />
       <input type="hidden" name="outcome" value={outcome} />

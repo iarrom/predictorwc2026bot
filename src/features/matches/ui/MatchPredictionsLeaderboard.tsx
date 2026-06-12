@@ -43,6 +43,12 @@ function resolveEntryPoints(
   return null;
 }
 
+function formatPoints(points: number | null): string {
+  if (points === null) return "—";
+  if (points > 0) return `+${points}`;
+  return String(points);
+}
+
 export function MatchPredictionsLeaderboard({
   match,
   predictions,
@@ -66,7 +72,7 @@ export function MatchPredictionsLeaderboard({
 
   if (ranked.length === 0) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-white/50">
         {t("noPredictionsYet")}
       </p>
     );
@@ -76,14 +82,14 @@ export function MatchPredictionsLeaderboard({
     match.status === "live" ? t("ptsLive") : t("points");
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-x-3 px-1 text-[11px] font-medium text-white/50">
+    <div className="flex flex-col gap-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_2.5rem] items-center gap-x-3 px-0.5 pb-1 text-[11px] font-medium text-white/45">
         <span>{t("player")}</span>
         <span>{t("pick")}</span>
         <span className="text-right">{pointsLabel}</span>
       </div>
 
-      <ul className="flex flex-col gap-2">
+      <ul className="flex flex-col">
         {ranked.map(({ entry, points }, index) => {
           const isCurrentUser = entry.user_id === currentUserId;
           const rank = index + 1;
@@ -91,25 +97,25 @@ export function MatchPredictionsLeaderboard({
           return (
             <li
               key={entry.user_id}
-              className="grid grid-cols-[minmax(0,1fr)_auto_3rem] items-center gap-x-3 rounded-2xl bg-white/5 px-3 py-2.5"
+              className="grid grid-cols-[minmax(0,1fr)_auto_2.5rem] items-center gap-x-3 border-t border-white/8 py-2.5 first:border-t-0"
             >
               <div className="flex min-w-0 items-center gap-2">
                 {canSeePlayerNames ? (
-                  <Avatar className="size-8 shrink-0">
+                  <Avatar className="size-7 shrink-0">
                     {entry.photo_url && (
                       <AvatarImage
                         src={entry.photo_url}
                         alt={entry.display_name}
                       />
                     )}
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-[10px]">
                       {getInitials(entry.display_name)}
                     </AvatarFallback>
                   </Avatar>
                 ) : null}
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-white">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm text-white">
                       {canSeePlayerNames
                         ? entry.display_name
                         : t("playerRank", { rank })}
@@ -126,7 +132,7 @@ export function MatchPredictionsLeaderboard({
                 </div>
               </div>
 
-              <p className="max-w-[5.5rem] truncate text-right text-xs text-white/65">
+              <p className="max-w-[5.5rem] truncate text-right text-xs text-white/55">
                 {formatOutcomeWins(
                   entry.outcome,
                   match.home_team_name,
@@ -137,11 +143,11 @@ export function MatchPredictionsLeaderboard({
 
               <p
                 className={cn(
-                  "text-right text-base font-bold tabular-nums",
-                  points && points > 0 ? "text-emerald-300" : "text-white/70",
+                  "text-right text-sm font-semibold tabular-nums",
+                  points && points > 0 ? "text-emerald-300" : "text-white/45",
                 )}
               >
-                {points !== null ? points : "—"}
+                {formatPoints(points)}
               </p>
             </li>
           );

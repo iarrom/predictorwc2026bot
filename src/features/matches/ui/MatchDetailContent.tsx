@@ -49,14 +49,16 @@ interface MatchDetailContentProps {
   teamColors?: Record<string, string>;
   canPredict?: boolean;
   canSeePlayerNames?: boolean;
-  isActive?: boolean;
   groupStanding?: GroupStanding;
   expanded?: boolean;
   onRequestExpand?: () => void;
 }
 
 const matchTabClassName =
-  "min-h-9 flex-1 text-xs text-white/60 hover:text-white data-active:bg-white/20 data-active:text-white dark:text-white/60 dark:hover:text-white dark:data-active:bg-white/20 dark:data-active:text-white";
+  "min-h-9 flex-1 rounded-none border-0 bg-transparent px-0 text-xs font-medium text-white/50 shadow-none hover:text-white/80 data-active:bg-transparent data-active:text-white data-active:font-semibold data-active:shadow-none dark:text-white/50 dark:hover:text-white/80 dark:data-active:bg-transparent dark:data-active:text-white";
+
+const matchDetailGridClassName =
+  "grid w-full grid-cols-[minmax(0,1fr)_7rem_minmax(0,1fr)] items-start gap-x-3";
 
 function MatchDetailCenterFocus({
   prediction,
@@ -88,11 +90,11 @@ function MatchDetailCenterFocus({
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   return (
-    <div className="col-start-2 row-span-2 flex min-w-20 flex-col items-center justify-center gap-1 self-center">
+    <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1 self-center">
       {prediction ? (
         <p
           className={cn(
-            "line-clamp-2 text-center text-lg font-bold leading-tight text-white",
+            "w-full truncate text-center text-lg font-bold leading-tight text-white",
             livePredictionTextClass(
               live,
               prediction.outcome,
@@ -109,13 +111,17 @@ function MatchDetailCenterFocus({
           )}
         </p>
       ) : locked ? (
-        <p className="text-lg font-medium text-white/60">{t("missed")}</p>
+        <p className="w-full text-center text-lg font-medium text-white/60">
+          {t("missed")}
+        </p>
       ) : (
-        <p className="text-lg font-medium text-red-300">{t("noPick")}</p>
+        <p className="w-full text-center text-lg font-medium text-red-300">
+          {t("noPick")}
+        </p>
       )}
 
       {showScore && (
-        <p className="text-2xl font-bold leading-none tabular-nums text-white">
+        <p className="w-full text-center text-2xl font-bold leading-none tabular-nums text-white">
           {formatMatchScore(homeScore, awayScore)}
         </p>
       )}
@@ -160,16 +166,18 @@ function LockedPredictionSummary({
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   if (!prediction) {
-    return <p className="text-sm text-white/70">{t("noPrediction")}</p>;
+    return (
+      <p className="text-center text-sm text-white/70">{t("noPrediction")}</p>
+    );
   }
 
   const points = prediction.points_awarded;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full flex-col items-center gap-2 text-center">
       <p
         className={cn(
-          "text-lg font-bold leading-tight text-white",
+          "w-full truncate text-lg font-bold leading-tight text-white",
           livePredictionTextClass(
             live,
             prediction.outcome,
@@ -211,7 +219,6 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   teamColors = {},
   canPredict = false,
   canSeePlayerNames = true,
-  isActive = true,
   groupStanding,
   expanded = false,
   onRequestExpand,
@@ -235,14 +242,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
     match.away_score !== null;
   const showScore = live || finished;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
-  const defaultMatchTab = groupStanding
-    ? "standings"
-    : live || finished
-      ? "updates"
-      : "lineups";
   const predictionsRevealed = shouldRevealMatchPredictions(match);
-  const showPredictionSection =
-    !locked || canPredict || predictionsRevealed;
+  const defaultMatchTab =
+    live || finished
+      ? "predictions"
+      : groupStanding
+        ? "standings"
+        : "lineups";
+  const showPredictionSection = !locked || (locked && !predictionsRevealed);
 
   return (
     <div
@@ -255,7 +262,6 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         homeTeamName={match.home_team_name}
         awayTeamName={match.away_team_name}
         teamColors={teamColors}
-        animate={isActive}
       />
 
       <div
@@ -266,14 +272,17 @@ export const MatchDetailContent = memo(function MatchDetailContent({
             : "overflow-hidden pb-4 pt-2",
         )}
       >
-        <section className="flex shrink-0 flex-col gap-2 pb-4">
+        <section className="flex shrink-0 flex-col gap-2 pb-5">
           <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
             {formatMatchSubtitle(match, t)}
           </p>
 
-          <div className="grid grid-cols-[1fr_auto_1fr] grid-rows-[auto_auto] items-center gap-x-3 gap-y-1.5">
-            <div className="col-start-1 row-start-1 flex justify-center">
+          <div className={matchDetailGridClassName}>
+            <div className="flex min-w-0 flex-col items-center gap-1.5">
               <TeamFlag name={match.home_team_name} size={44} />
+              <p className="line-clamp-2 w-full text-center text-sm font-semibold leading-tight text-white">
+                {match.home_team_name}
+              </p>
             </div>
 
             <MatchDetailCenterFocus
@@ -292,17 +301,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               t={t}
             />
 
-            <div className="col-start-3 row-start-1 flex justify-center">
+            <div className="flex min-w-0 flex-col items-center gap-1.5">
               <TeamFlag name={match.away_team_name} size={44} />
+              <p className="line-clamp-2 w-full text-center text-sm font-semibold leading-tight text-white">
+                {match.away_team_name}
+              </p>
             </div>
-
-            <p className="col-start-1 row-start-2 line-clamp-2 text-center text-sm font-semibold leading-tight text-white">
-              {match.home_team_name}
-            </p>
-
-            <p className="col-start-3 row-start-2 line-clamp-2 text-center text-sm font-semibold leading-tight text-white">
-              {match.away_team_name}
-            </p>
           </div>
 
           <div className="flex flex-col items-center gap-1">
@@ -315,21 +319,14 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         </section>
 
         {showPredictionSection && (
-          <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
-            <h2 className="mb-3 shrink-0 font-heading text-base font-medium text-white">
-              {predictionsRevealed ? t("predictions") : t("yourPrediction")}
+          <section className="flex shrink-0 flex-col border-t border-white/10 py-5">
+            <h2 className="mb-3 shrink-0 text-center font-heading text-base font-medium text-white">
+              {t("yourPrediction")}
             </h2>
 
-            <div className="flex flex-col">
+            <div className="w-full">
               {locked ? (
-                predictionsRevealed ? (
-                  <MatchPredictionsLeaderboard
-                    match={match}
-                    predictions={matchPredictions}
-                    currentUserId={currentUserId}
-                    canSeePlayerNames={canSeePlayerNames}
-                  />
-                ) : (
+                <div className="text-center">
                   <LockedPredictionSummary
                     prediction={prediction}
                     homeTeamName={match.home_team_name}
@@ -341,7 +338,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                     outcomeMessages={outcomeMessages}
                     t={t}
                   />
-                )
+                </div>
               ) : (
                 <PredictionForm
                   matchId={match.id}
@@ -358,7 +355,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
           </section>
         )}
 
-        <section className="flex shrink-0 flex-col border-t border-white/10 pt-4">
+        <section className="flex shrink-0 flex-col border-t border-white/10 py-5">
           <Tabs
             defaultValue={defaultMatchTab}
             onValueChange={() => {
@@ -374,8 +371,11 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                   onRequestExpand?.();
                 }
               }}
-              className="flex h-auto w-full shrink-0 bg-white/10 p-1 group-data-horizontal/tabs:h-auto"
+              className="flex h-auto w-full shrink-0 justify-start gap-4 bg-transparent p-0 group-data-horizontal/tabs:h-auto"
             >
+              <TabsTrigger value="predictions" className={matchTabClassName}>
+                {t("predictions")}
+              </TabsTrigger>
               {groupStanding && (
                 <TabsTrigger value="standings" className={matchTabClassName}>
                   {t("standings")}
@@ -389,10 +389,26 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="predictions" className="mt-0">
+              {predictionsRevealed ? (
+                <MatchPredictionsLeaderboard
+                  match={match}
+                  predictions={matchPredictions}
+                  currentUserId={currentUserId}
+                  canSeePlayerNames={canSeePlayerNames}
+                />
+              ) : (
+                <p className="text-sm text-white/50">
+                  {t("predictionsRevealAfter")}
+                </p>
+              )}
+            </TabsContent>
+
             {groupStanding && (
               <TabsContent value="standings" className="mt-0">
                 <GroupStandingsCard
                   group={groupStanding}
+                  variant="transparent"
                   highlightedTeams={[
                     match.home_team_name,
                     match.away_team_name,
@@ -415,6 +431,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                 events={matchEvents}
                 homeTeamName={match.home_team_name}
                 awayTeamName={match.away_team_name}
+                teamColors={teamColors}
               />
             </TabsContent>
           </Tabs>
