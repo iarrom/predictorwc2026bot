@@ -22,6 +22,7 @@
     "test:watch": "vitest",
     "import:schedule": "tsx scripts/import-schedule.ts",
     "import:squads": "tsx scripts/import-squads.ts",
+    "copy:player-photos": "tsx scripts/copy-player-photos.ts",
     "map:fd": "tsx scripts/map-football-data.ts",
     "extract:team-colors": "tsx scripts/extract-team-colors.ts",
     "encrypt:predictions": "tsx scripts/encrypt-existing-predictions.ts"

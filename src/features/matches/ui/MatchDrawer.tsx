@@ -11,7 +11,9 @@ import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
+import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
+import { isMatchUpsetWatch } from "@/shared/lib/onside/upsets";
 import { MatchDrawerSlide } from "@/features/matches/ui/MatchDrawerSlide";
 import {
   Carousel,
@@ -58,7 +60,9 @@ interface MatchDrawerProps {
   teamColors: Record<string, string>;
   canPredict: boolean;
   canSeePlayerNames: boolean;
+  playerPhotosByTeam: PlayerPhotosByTeam;
   groupStandingsByName: Record<string, GroupStanding>;
+  upsetMatchIds: Set<string>;
   onMatchChange: (matchId: string) => void;
   onClose: () => void;
 }
@@ -74,7 +78,9 @@ export function MatchDrawer({
   teamColors,
   canPredict,
   canSeePlayerNames,
+  playerPhotosByTeam,
   groupStandingsByName,
+  upsetMatchIds,
   onMatchChange,
   onClose,
 }: MatchDrawerProps) {
@@ -291,7 +297,9 @@ export function MatchDrawer({
                       teamColors={teamColors}
                       canPredict={canPredict}
                       canSeePlayerNames={canSeePlayerNames}
+                      playerPhotosByTeam={playerPhotosByTeam}
                       groupStandingsByName={groupStandingsByName}
+                      isUpsetWatch={isMatchUpsetWatch(match, upsetMatchIds)}
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}
                       distanceFromActive={Math.abs(index - snapIndex)}

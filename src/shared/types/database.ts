@@ -165,6 +165,8 @@ export interface Database {
           name: string;
           position: PlayerPosition | null;
           shirt_number: number | null;
+          photo_url: string | null;
+          wiki_title: string | null;
           created_at: string;
         };
         Insert: {
@@ -173,6 +175,8 @@ export interface Database {
           name: string;
           position?: PlayerPosition | null;
           shirt_number?: number | null;
+          photo_url?: string | null;
+          wiki_title?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["players"]["Insert"]>;

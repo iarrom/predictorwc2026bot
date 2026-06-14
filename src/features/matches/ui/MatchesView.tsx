@@ -8,11 +8,13 @@ import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
+import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import { useLiveRefresh } from "@/shared/lib/supabase/useLiveRefresh";
 import { GroupStandingsList } from "@/features/matches/ui/GroupStandingsList";
 import { MatchDrawer } from "@/features/matches/ui/MatchDrawer";
+import { LiveMinuteIndicator } from "@/features/matches/ui/LiveMinuteIndicator";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,8 +28,10 @@ import {
   formatMatchTime,
   getDateGroupKey,
   getMatchDayBucket,
+  getRelativeDayOffset,
   type MatchDayBucket,
 } from "@/shared/lib/formatDate";
+import { isMatchUpsetWatch } from "@/shared/lib/onside/upsets";
 import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { formatMatchScore } from "@/shared/lib/formatMatchScore";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
@@ -45,26 +49,39 @@ interface MatchesViewProps {
   eventsByMatch: Record<string, MatchEvent[]>;
   currentUserId: string | null;
   teamColors: Record<string, string>;
+  playerPhotosByTeam: PlayerPhotosByTeam;
   canPredict: boolean;
   canSeePlayerNames: boolean;
+  upsetMatchIds: Set<string>;
 }
 
 const TAB_KEYS: MatchDayBucket[] = ["past", "upcoming3days", "future"];
+const PAST_VISIBLE_DAYS = 3;
 
 const FLAG_SIZE = 28;
+const FEATURED_FLAG_SIZE = 36;
 const MATCH_CARD_MIN_H = "min-h-[7rem]";
 const matchCardGridClassName =
   "grid w-full grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-start gap-x-2";
 
+function isLiveMatch(match: Match): boolean {
+  return (
+    match.status === "live" &&
+    match.home_score !== null &&
+    match.away_score !== null
+  );
+}
+
+function bucketForMatch(match: Match): MatchDayBucket {
+  if (match.status === "finished") return "past";
+  return getMatchDayBucket(match.kickoff_at);
+}
+
 function getDefaultTab(matches: Match[]): MatchDayBucket {
-  if (
-    matches.some(
-      (match) => getMatchDayBucket(match.kickoff_at) === "upcoming3days",
-    )
-  ) {
+  if (matches.some((match) => bucketForMatch(match) === "upcoming3days")) {
     return "upcoming3days";
   }
-  if (matches.some((match) => getMatchDayBucket(match.kickoff_at) === "future")) {
+  if (matches.some((match) => bucketForMatch(match) === "future")) {
     return "future";
   }
   return "past";
@@ -96,27 +113,23 @@ function MatchTimeBadge({
   liveMinute: string | null;
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
-  if (live) {
-    return (
-      <Badge
-        variant="secondary"
-        className="h-4 shrink-0 rounded-md border-0 bg-red-500/15 px-1.5 text-[10px] font-semibold text-red-300 tabular-nums"
-      >
-        <span
-          aria-hidden
-          className="size-1.5 shrink-0 rounded-full bg-red-400 motion-safe:animate-pulse"
-        />
-        {liveMinute ?? t("live")}
-      </Badge>
-    );
-  }
-
   return (
     <Badge
       variant="secondary"
-      className="h-4 shrink-0 rounded-md border-0 bg-white/10 px-1.5 text-[10px] font-medium text-foreground tabular-nums"
+      className={cn(
+        "h-4 shrink-0 rounded-md border-0 bg-white/10 px-1.5 text-[10px] font-medium text-foreground",
+        !live && "tabular-nums",
+        live && "border-0 bg-red-500/15 text-red-300",
+      )}
     >
-      {formatMatchTime(kickoffAt, locale)}
+      {live ? (
+        <LiveMinuteIndicator
+          liveMinute={liveMinute}
+          liveLabel={t("live")}
+        />
+      ) : (
+        formatMatchTime(kickoffAt, locale)
+      )}
     </Badge>
   );
 }
@@ -131,6 +144,7 @@ function MatchCenterFocus({
   homeTeamName,
   awayTeamName,
   points,
+  featured = false,
   outcomeMessages,
   t,
 }: {
@@ -143,13 +157,18 @@ function MatchCenterFocus({
   homeTeamName: string;
   awayTeamName: string;
   points: number | null;
+  featured?: boolean;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
+  const scoreClassName = featured
+    ? "w-full text-center text-[20px] font-bold leading-none tabular-nums"
+    : "w-full text-center text-[17px] font-bold leading-none tabular-nums";
+
   if (finished) {
     return (
       <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1.5 self-center">
-        <p className="w-full text-center text-[17px] font-bold leading-none tabular-nums">
+        <p className={scoreClassName}>
           {formatMatchScore(homeScore, awayScore)}
         </p>
         {prediction ? (
@@ -209,11 +228,120 @@ function MatchCenterFocus({
       )}
 
       {live && (
-        <p className="w-full text-center text-[17px] font-bold leading-none tabular-nums text-white">
+        <p className={cn(scoreClassName, "text-white")}>
           {formatMatchScore(homeScore, awayScore)}
         </p>
       )}
     </div>
+  );
+}
+
+function renderMatchCard({
+  match,
+  prediction,
+  voters,
+  isSelected,
+  featured = false,
+  isUpsetWatch = false,
+  locale,
+  outcomeMessages,
+  t,
+  onOpen,
+}: {
+  match: Match;
+  prediction: PredictionDetail | undefined;
+  voters: MatchVoterInfo;
+  isSelected: boolean;
+  featured?: boolean;
+  isUpsetWatch?: boolean;
+  locale: Locale;
+  outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  t: ReturnType<typeof useTranslations<"matches">>;
+  onOpen: (matchId: string) => void;
+}) {
+  const locked = new Date(match.kickoff_at) <= new Date();
+  const live = isLiveMatch(match);
+  const finished =
+    match.status === "finished" &&
+    match.home_score !== null &&
+    match.away_score !== null;
+  const points = finished
+    ? (prediction?.points_awarded ?? null)
+    : null;
+  const liveMinute = formatLiveMinute(match.minute, match.injury_time);
+  const flagSize = featured ? FEATURED_FLAG_SIZE : FLAG_SIZE;
+  const teamNameClassName = featured
+    ? "line-clamp-2 w-full text-center text-[13px] font-medium leading-tight"
+    : "line-clamp-2 w-full text-center text-[11px] font-medium leading-tight";
+
+  return (
+    <button
+      type="button"
+      onClick={() => onOpen(match.id)}
+      aria-pressed={isSelected}
+      className={cn(
+        "flex w-full flex-col items-stretch justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
+        MATCH_CARD_MIN_H,
+        "border-t border-white/[0.08]",
+        isSelected && "bg-white/[0.05]",
+      )}
+    >
+      <div className="mb-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-2">
+        <div className="flex min-w-0 items-center justify-start">
+          <MatchVoters voters={voters} compact />
+        </div>
+
+        <div className="flex min-w-0 items-center justify-center gap-1">
+          {isUpsetWatch ? (
+            <span className="text-[11px]" aria-label={t("upsetWatch")}>
+              🔥
+            </span>
+          ) : null}
+          <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
+            {formatMatchSubtitle(match, t)}
+          </p>
+        </div>
+
+        <div className="flex min-w-0 items-center justify-end">
+          {!finished && (
+            <MatchTimeBadge
+              kickoffAt={match.kickoff_at}
+              locale={locale}
+              live={live}
+              liveMinute={liveMinute}
+              t={t}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className={matchCardGridClassName}>
+        <div className="flex min-w-0 flex-col items-center gap-1.5">
+          <TeamFlag name={match.home_team_name} size={flagSize} />
+          <p className={teamNameClassName}>{match.home_team_name}</p>
+        </div>
+
+        <MatchCenterFocus
+          prediction={prediction}
+          locked={locked}
+          live={live}
+          finished={finished}
+          homeScore={match.home_score ?? 0}
+          awayScore={match.away_score ?? 0}
+          homeTeamName={match.home_team_name}
+          awayTeamName={match.away_team_name}
+          points={points}
+          featured={featured}
+          outcomeMessages={outcomeMessages}
+          t={t}
+        />
+
+        <div className="flex min-w-0 flex-col items-center gap-1.5">
+          <TeamFlag name={match.away_team_name} size={flagSize} />
+          <p className={teamNameClassName}>{match.away_team_name}</p>
+        </div>
+      </div>
+    </button>
   );
 }
 
@@ -225,8 +353,10 @@ export function MatchesView({
   eventsByMatch,
   currentUserId,
   teamColors,
+  playerPhotosByTeam,
   canPredict,
   canSeePlayerNames,
+  upsetMatchIds,
 }: MatchesViewProps) {
   const locale = useLocale() as Locale;
   const t = useTranslations("matches");
@@ -244,6 +374,7 @@ export function MatchesView({
     getDefaultTab(matches),
   );
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
+  const [showAllPast, setShowAllPast] = useState(false);
 
   const tabLabels: Record<MatchDayBucket, string> = {
     past: t("tabPast"),
@@ -257,12 +388,31 @@ export function MatchesView({
     future: t("emptyFuture"),
   };
 
+  const liveMatches = useMemo(
+    () =>
+      matches
+        .filter(isLiveMatch)
+        .sort((a, b) => a.kickoff_at.localeCompare(b.kickoff_at)),
+    [matches],
+  );
+
+  const liveMatchIds = useMemo(
+    () => new Set(liveMatches.map((match) => match.id)),
+    [liveMatches],
+  );
+
   const filteredMatches = useMemo(
     () =>
       matches.filter(
-        (match) => getMatchDayBucket(match.kickoff_at) === activeTab,
+        (match) =>
+          bucketForMatch(match) === activeTab && !liveMatchIds.has(match.id),
       ),
-    [matches, activeTab],
+    [matches, activeTab, liveMatchIds],
+  );
+
+  const drawerMatches = useMemo(
+    () => [...liveMatches, ...filteredMatches],
+    [liveMatches, filteredMatches],
   );
 
   const drawerMatchId = useMemo(() => {
@@ -270,20 +420,10 @@ export function MatchesView({
       return null;
     }
 
-    return filteredMatches.some((match) => match.id === selectedMatchId)
+    return drawerMatches.some((match) => match.id === selectedMatchId)
       ? selectedMatchId
       : null;
-  }, [filteredMatches, selectedMatchId]);
-
-  const groupStandings = useMemo(
-    () => buildGroupStandings(matches),
-    [matches],
-  );
-
-  const groupStandingsByName = useMemo(
-    () => Object.fromEntries(groupStandings.map((group) => [group.groupName, group])),
-    [groupStandings],
-  );
+  }, [drawerMatches, selectedMatchId]);
 
   const groupedByDate = useMemo(() => {
     const groups = new Map<string, Match[]>();
@@ -295,14 +435,38 @@ export function MatchesView({
       groups.set(key, list);
     }
 
-    return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [filteredMatches]);
+    const sorted = [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+    return activeTab === "past" ? sorted.reverse() : sorted;
+  }, [filteredMatches, activeTab]);
+
+  const visibleGroups = useMemo(
+    () =>
+      activeTab === "past" && !showAllPast
+        ? groupedByDate.slice(0, PAST_VISIBLE_DAYS)
+        : groupedByDate,
+    [activeTab, groupedByDate, showAllPast],
+  );
+
+  const hasMorePast =
+    activeTab === "past" &&
+    !showAllPast &&
+    groupedByDate.length > PAST_VISIBLE_DAYS;
+
+  const groupStandings = useMemo(
+    () => buildGroupStandings(matches),
+    [matches],
+  );
+
+  const groupStandingsByName = useMemo(
+    () => Object.fromEntries(groupStandings.map((group) => [group.groupName, group])),
+    [groupStandings],
+  );
 
   const openMatch = useCallback(
     (matchId: string) => {
       const match = matches.find((item) => item.id === matchId);
       if (match) {
-        setActiveTab(getMatchDayBucket(match.kickoff_at));
+        setActiveTab(bucketForMatch(match));
       }
       setSelectedMatchId(matchId);
     },
@@ -319,13 +483,17 @@ export function MatchesView({
 
   const handleTabChange = (tab: MatchDayBucket) => {
     setActiveTab(tab);
+    setShowAllPast(false);
 
     if (!selectedMatchId) {
       return;
     }
 
     const match = matches.find((item) => item.id === selectedMatchId);
-    if (!match || getMatchDayBucket(match.kickoff_at) !== tab) {
+    if (
+      !match ||
+      (isLiveMatch(match) ? false : bucketForMatch(match) !== tab)
+    ) {
       setSelectedMatchId(null);
     }
   };
@@ -361,7 +529,7 @@ export function MatchesView({
       </div>
 
       <div className="sports-panel corner-squircle mt-3 flex flex-col">
-        {groupedByDate.length === 0 ? (
+        {liveMatches.length === 0 && groupedByDate.length === 0 ? (
           <Empty className="border-0 py-8">
             <EmptyHeader>
               <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
@@ -371,7 +539,37 @@ export function MatchesView({
             </EmptyHeader>
           </Empty>
         ) : (
-          groupedByDate.map(([dateKey, dayMatches], groupIndex) => {
+          <>
+            {liveMatches.length > 0 && (
+              <section>
+                <div className="flex w-full items-center justify-center gap-1.5 border-b border-white/[0.08] px-3 py-2.5 text-[13px] font-semibold text-foreground">
+                  <span
+                    className="size-1.5 shrink-0 rounded-full bg-red-400 animate-pulse"
+                    aria-hidden
+                  />
+                  <span>{t("liveNow")}</span>
+                </div>
+
+                {liveMatches.map((match) => (
+                  <div key={match.id}>
+                    {renderMatchCard({
+                      match,
+                      prediction: predictionMap[match.id],
+                      voters: voterMap[match.id] ?? { count: 0 },
+                      isSelected: selectedMatchId === match.id,
+                      featured: true,
+                      isUpsetWatch: isMatchUpsetWatch(match, upsetMatchIds),
+                      locale,
+                      outcomeMessages,
+                      t,
+                      onOpen: openMatch,
+                    })}
+                  </div>
+                ))}
+              </section>
+            )}
+
+            {visibleGroups.map(([dateKey, dayMatches], groupIndex) => {
             const isCollapsed = collapsed.has(dateKey);
 
             return (
@@ -383,12 +581,18 @@ export function MatchesView({
                   }
                   className={cn(
                     "flex w-full items-center justify-center gap-0.5 border-t border-white/[0.08] bg-white/[0.05] px-3 py-2.5 text-[13px] font-bold text-foreground transition-colors hover:bg-white/[0.08]",
-                    groupIndex === 0 && "border-t-0",
+                    groupIndex === 0 && liveMatches.length === 0 && "border-t-0",
                   )}
                   aria-expanded={!isCollapsed}
                 >
                   <span>
-                    {formatMatchDateHeader(dayMatches[0].kickoff_at, locale)}
+                    {(() => {
+                      const kickoffAt = dayMatches[0].kickoff_at;
+                      const offset = getRelativeDayOffset(kickoffAt);
+                      if (offset === 0) return t("today");
+                      if (offset === 1) return t("tomorrow");
+                      return formatMatchDateHeader(kickoffAt, locale);
+                    })()}
                   </span>
                   {groupIndex > 0 && (
                     <HugeiconsIcon
@@ -399,105 +603,42 @@ export function MatchesView({
                 </button>
 
                 {!isCollapsed &&
-                  dayMatches.map((match) => {
-                    const prediction = predictionMap[match.id];
-                    const voters = voterMap[match.id] ?? { count: 0 };
-                    const locked = new Date(match.kickoff_at) <= new Date();
-                    const live =
-                      match.status === "live" &&
-                      match.home_score !== null &&
-                      match.away_score !== null;
-                    const finished =
-                      match.status === "finished" &&
-                      match.home_score !== null &&
-                      match.away_score !== null;
-                    const isSelected = selectedMatchId === match.id;
-                    const points = finished
-                      ? (predictionMap[match.id]?.points_awarded ?? null)
-                      : null;
-                    const liveMinute = formatLiveMinute(match.minute, match.injury_time);
-
-                    return (
-                      <button
-                        key={match.id}
-                        type="button"
-                        onClick={() => openMatch(match.id)}
-                        aria-pressed={isSelected}
-                        className={cn(
-                          "flex w-full flex-col items-stretch justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
-                          MATCH_CARD_MIN_H,
-                          "border-t border-white/[0.08]",
-                          isSelected && "bg-white/[0.05]",
-                        )}
-                      >
-                        <div className="mb-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-2">
-                          <div className="flex min-w-0 items-center justify-start">
-                            <MatchVoters voters={voters} compact />
-                          </div>
-
-                          <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
-                            {formatMatchSubtitle(match, t)}
-                          </p>
-
-                          <div className="flex min-w-0 items-center justify-end">
-                            <MatchTimeBadge
-                              kickoffAt={match.kickoff_at}
-                              locale={locale}
-                              live={live}
-                              liveMinute={liveMinute}
-                              t={t}
-                            />
-                          </div>
-                        </div>
-
-                        <div className={matchCardGridClassName}>
-                          <div className="flex min-w-0 flex-col items-center gap-1.5">
-                            <TeamFlag
-                              name={match.home_team_name}
-                              size={FLAG_SIZE}
-                            />
-                            <p className="line-clamp-2 w-full text-center text-[11px] font-medium leading-tight">
-                              {match.home_team_name}
-                            </p>
-                          </div>
-
-                          <MatchCenterFocus
-                            prediction={prediction}
-                            locked={locked}
-                            live={live}
-                            finished={finished}
-                            homeScore={match.home_score ?? 0}
-                            awayScore={match.away_score ?? 0}
-                            homeTeamName={match.home_team_name}
-                            awayTeamName={match.away_team_name}
-                            points={points}
-                            outcomeMessages={outcomeMessages}
-                            t={t}
-                          />
-
-                          <div className="flex min-w-0 flex-col items-center gap-1.5">
-                            <TeamFlag
-                              name={match.away_team_name}
-                              size={FLAG_SIZE}
-                            />
-                            <p className="line-clamp-2 w-full text-center text-[11px] font-medium leading-tight">
-                              {match.away_team_name}
-                            </p>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+                  dayMatches.map((match) => (
+                    <div key={match.id}>
+                      {renderMatchCard({
+                        match,
+                        prediction: predictionMap[match.id],
+                        voters: voterMap[match.id] ?? { count: 0 },
+                        isSelected: selectedMatchId === match.id,
+                        isUpsetWatch: isMatchUpsetWatch(match, upsetMatchIds),
+                        locale,
+                        outcomeMessages,
+                        t,
+                        onOpen: openMatch,
+                      })}
+                    </div>
+                  ))}
               </section>
             );
-          })
+          })}
+
+            {hasMorePast && (
+              <button
+                type="button"
+                onClick={() => setShowAllPast(true)}
+                className="border-t border-white/[0.08] bg-white/[0.02] px-3 py-2.5 text-center text-[13px] font-medium text-white/55 transition-colors hover:bg-white/[0.05] hover:text-white/75"
+              >
+                {t("showMore")}
+              </button>
+            )}
+          </>
         )}
       </div>
 
       <GroupStandingsList groups={groupStandings} />
 
       <MatchDrawer
-        matches={filteredMatches}
+        matches={drawerMatches}
         matchId={drawerMatchId}
         voterMap={voterMap}
         predictionMap={predictionMap}
@@ -505,9 +646,11 @@ export function MatchesView({
         eventsByMatch={eventsByMatch}
         currentUserId={currentUserId}
         teamColors={teamColors}
+        playerPhotosByTeam={playerPhotosByTeam}
         canPredict={canPredict}
         canSeePlayerNames={canSeePlayerNames}
         groupStandingsByName={groupStandingsByName}
+        upsetMatchIds={upsetMatchIds}
         onMatchChange={handleMatchChange}
         onClose={closeMatch}
       />

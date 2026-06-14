@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMatchDateHeader } from "./formatDate";
+import { formatMatchDateHeader, getRelativeDayOffset } from "./formatDate";
 
 describe("formatMatchDateHeader", () => {
   it("uses a stable en template without ICU literal commas", () => {
@@ -24,5 +24,19 @@ describe("formatMatchDateHeader", () => {
     const day = parts.find((p) => p.type === "day")?.value ?? "";
 
     expect(formatted).toBe(`${weekday}, ${day} ${month}`);
+  });
+});
+
+describe("getRelativeDayOffset", () => {
+  it("returns 0 for today", () => {
+    const now = new Date(2026, 5, 14, 12, 0, 0);
+    const iso = new Date(2026, 5, 14, 20, 0, 0).toISOString();
+    expect(getRelativeDayOffset(iso, now)).toBe(0);
+  });
+
+  it("returns 1 for tomorrow", () => {
+    const now = new Date(2026, 5, 14, 12, 0, 0);
+    const iso = new Date(2026, 5, 15, 10, 0, 0).toISOString();
+    expect(getRelativeDayOffset(iso, now)).toBe(1);
   });
 });

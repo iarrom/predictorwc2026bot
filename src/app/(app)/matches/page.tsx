@@ -1,10 +1,13 @@
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { buildPredictionsByMatch } from "@/features/matches/lib/predictionsByMatch";
 import { shouldRevealMatchPredictions } from "@/features/matches/lib/shouldRevealMatchPredictions";
+import { buildPlayerPhotosMap } from "@/features/matches/lib/playerPhotos";
 import { buildTeamColorsMap } from "@/features/matches/lib/teamColors";
 import { buildVoterMap } from "@/features/matches/lib/voterInfo";
 import { decryptPredictionForDisplay } from "@/features/predictions/lib/decryptForDisplay";
 import { MatchesView } from "@/features/matches/ui/MatchesView";
+import { getUpsets } from "@/shared/lib/onside/client";
+import { buildUpsetMatchIds } from "@/shared/lib/onside/upsets";
 import {
   canSeePlayerNames,
   getCurrentUserId,
@@ -44,6 +47,7 @@ export default async function MatchesPage() {
     { data: profiles },
     { data: excludedProfiles },
     { data: teams },
+    { data: players },
     { data: matchEvents },
   ] = await Promise.all([
     userId
@@ -61,6 +65,10 @@ export default async function MatchesPage() {
       .select("id")
       .in("telegram_id", [...LEADERBOARD_EXCLUDED_TELEGRAM_IDS]),
     supabase.from("teams").select("name, primary_color"),
+    supabase
+      .from("players")
+      .select("team_id, shirt_number, photo_url")
+      .not("photo_url", "is", null),
     supabase
       .from("match_events")
       .select("*")
@@ -141,6 +149,13 @@ export default async function MatchesPage() {
   );
 
   const teamColors = buildTeamColorsMap(teams ?? []);
+  const playerPhotosByTeam = buildPlayerPhotosMap(players ?? []);
+
+  const upsetsResponse = await getUpsets();
+  const upsetMatchIds = buildUpsetMatchIds(
+    typedMatches,
+    upsetsResponse?.upsets ?? [],
+  );
 
   const eventsByMatch = (matchEvents ?? []).reduce<
     Record<string, MatchEvent[]>
@@ -177,8 +192,10 @@ export default async function MatchesPage() {
       eventsByMatch={eventsByMatch}
       currentUserId={userId}
       teamColors={teamColors}
+      playerPhotosByTeam={playerPhotosByTeam}
       canPredict={canPredict}
       canSeePlayerNames={showPlayerNames}
+      upsetMatchIds={upsetMatchIds}
     />
   );
 }

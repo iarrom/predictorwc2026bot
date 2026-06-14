@@ -62,6 +62,12 @@ export function getLocalDayStart(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
+export function getRelativeDayOffset(iso: string, now = new Date()): number {
+  const day = getLocalDayStart(new Date(iso)).getTime();
+  const today = getLocalDayStart(now).getTime();
+  return Math.round((day - today) / 86_400_000);
+}
+
 export type MatchDayBucket = "past" | "upcoming3days" | "future";
 
 export function getMatchDayBucket(

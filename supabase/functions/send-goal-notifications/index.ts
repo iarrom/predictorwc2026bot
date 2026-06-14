@@ -171,7 +171,6 @@ Deno.serve(async (req) => {
     const { data: recipients, error: recipientsError } = await supabase
       .from("profiles")
       .select("id, telegram_id, locale")
-      .in("role", ["participant", "admin"])
       .eq("notify_goals", true)
       .not("telegram_id", "is", null);
 
@@ -190,6 +189,9 @@ Deno.serve(async (req) => {
 
       const messageCache = new Map<NotificationLocale, string>();
       const buttonCache = new Map<NotificationLocale, string>();
+
+      let eventMessagesSent = 0;
+      let eventDeliveryFailures = 0;
 
       for (const profile of recipientProfiles) {
         const locale = normalizeNotificationLocale(profile.locale);
@@ -215,9 +217,25 @@ Deno.serve(async (req) => {
 
         if (delivered) {
           messagesSent++;
+          eventMessagesSent++;
         } else {
           deliveryFailures++;
+          eventDeliveryFailures++;
         }
+      }
+
+      const shouldMarkNotified =
+        recipientProfiles.length === 0 || eventMessagesSent > 0;
+
+      if (!shouldMarkNotified) {
+        console.warn("goal notification skipped marking notified_at", {
+          eventId: event.id,
+          matchId: event.match_id,
+          eventMessagesSent,
+          eventDeliveryFailures,
+          recipients: recipientProfiles.length,
+        });
+        continue;
       }
 
       const { error: markError } = await supabase
@@ -233,6 +251,14 @@ Deno.serve(async (req) => {
 
       eventsProcessed++;
     }
+
+    console.log("send-goal-notifications summary", {
+      eventsProcessed,
+      messagesSent,
+      deliveryFailures,
+      recipients: recipientProfiles.length,
+      pendingEvents: pendingEvents.length,
+    });
 
     return new Response(
       JSON.stringify({

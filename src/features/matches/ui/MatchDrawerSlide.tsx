@@ -5,6 +5,7 @@ import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
+import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import { MatchDetailContent } from "@/features/matches/ui/MatchDetailContent";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,9 @@ interface MatchDrawerSlideProps {
   teamColors: Record<string, string>;
   canPredict: boolean;
   canSeePlayerNames: boolean;
+  playerPhotosByTeam: PlayerPhotosByTeam;
   groupStandingsByName: Record<string, GroupStanding>;
+  isUpsetWatch?: boolean;
   isActive: boolean;
   isMounted: boolean;
   distanceFromActive: number;
@@ -37,7 +40,9 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
   teamColors,
   canPredict,
   canSeePlayerNames,
+  playerPhotosByTeam,
   groupStandingsByName,
+  isUpsetWatch = false,
   isActive,
   isMounted,
   distanceFromActive,
@@ -69,11 +74,13 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
           teamColors={teamColors}
           canPredict={canPredict}
           canSeePlayerNames={canSeePlayerNames}
+          playerPhotosByTeam={playerPhotosByTeam}
           groupStanding={
             match.group_name
               ? groupStandingsByName[match.group_name]
               : undefined
           }
+          isUpsetWatch={isUpsetWatch}
           expanded={expanded}
           onRequestExpand={onRequestExpand}
         />

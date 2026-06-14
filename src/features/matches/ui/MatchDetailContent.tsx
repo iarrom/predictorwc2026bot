@@ -14,12 +14,13 @@ import {
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { shouldRevealMatchPredictions } from "@/features/matches/lib/shouldRevealMatchPredictions";
-import { GroupStandingsCard } from "@/features/matches/ui/GroupStandingsList";
 import { MatchEventsTimeline } from "@/features/matches/ui/MatchEventsTimeline";
 import { MatchPredictionsLeaderboard } from "@/features/matches/ui/MatchPredictionsLeaderboard";
 import { MatchLineups } from "@/features/matches/ui/MatchLineups";
+import { MatchStatisticsTab } from "@/features/matches/ui/MatchStatisticsTab";
 import { MatchTeamBackground } from "@/features/matches/ui/MatchTeamBackground";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
+import { UpsetWatchBadge } from "@/features/matches/ui/UpsetWatchBadge";
 import { PredictionForm } from "@/features/predictions/ui/PredictionForm";
 import {
   formatMatchKickoffDate,
@@ -34,6 +35,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import type { Locale } from "@/shared/types/database";
@@ -50,6 +52,8 @@ interface MatchDetailContentProps {
   canPredict?: boolean;
   canSeePlayerNames?: boolean;
   groupStanding?: GroupStanding;
+  playerPhotosByTeam?: PlayerPhotosByTeam;
+  isUpsetWatch?: boolean;
   expanded?: boolean;
   onRequestExpand?: () => void;
 }
@@ -220,6 +224,8 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   canPredict = false,
   canSeePlayerNames = true,
   groupStanding,
+  playerPhotosByTeam = {},
+  isUpsetWatch = false,
   expanded = false,
   onRequestExpand,
 }: MatchDetailContentProps) {
@@ -244,11 +250,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const predictionsRevealed = shouldRevealMatchPredictions(match);
   const defaultMatchTab =
-    live || finished
-      ? "predictions"
-      : groupStanding
-        ? "standings"
-        : "lineups";
+    live || finished ? "predictions" : "statistics";
   const showPredictionSection = !locked || (locked && !predictionsRevealed);
 
   return (
@@ -273,9 +275,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
         )}
       >
         <section className="flex shrink-0 flex-col gap-2 pb-5">
-          <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
-            {formatMatchSubtitle(match, t)}
-          </p>
+          <div className="flex items-center justify-center gap-2">
+            <p className="line-clamp-1 text-center text-[11px] uppercase tracking-wide text-white/70">
+              {formatMatchSubtitle(match, t)}
+            </p>
+            {isUpsetWatch ? <UpsetWatchBadge label={t("upsetWatch")} /> : null}
+          </div>
 
           <div className={matchDetailGridClassName}>
             <div className="flex min-w-0 flex-col items-center gap-1.5">
@@ -376,11 +381,9 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               <TabsTrigger value="predictions" className={matchTabClassName}>
                 {t("predictions")}
               </TabsTrigger>
-              {groupStanding && (
-                <TabsTrigger value="standings" className={matchTabClassName}>
-                  {t("standings")}
-                </TabsTrigger>
-              )}
+              <TabsTrigger value="statistics" className={matchTabClassName}>
+                {t("statistics")}
+              </TabsTrigger>
               <TabsTrigger value="lineups" className={matchTabClassName}>
                 {t("lineups")}
               </TabsTrigger>
@@ -404,25 +407,24 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               )}
             </TabsContent>
 
-            {groupStanding && (
-              <TabsContent value="standings" className="mt-0">
-                <GroupStandingsCard
-                  group={groupStanding}
-                  variant="transparent"
-                  highlightedTeams={[
-                    match.home_team_name,
-                    match.away_team_name,
-                  ]}
-                />
-              </TabsContent>
-            )}
+            <TabsContent value="statistics" className="mt-0">
+              <MatchStatisticsTab
+                match={match}
+                groupStanding={groupStanding}
+                isUpsetWatch={isUpsetWatch}
+              />
+            </TabsContent>
 
             <TabsContent value="lineups" className="mt-0">
               <MatchLineups
                 homeTeamName={match.home_team_name}
                 awayTeamName={match.away_team_name}
+                homeTeamId={match.home_team_id}
+                awayTeamId={match.away_team_id}
                 homeLineup={match.home_lineup}
                 awayLineup={match.away_lineup}
+                playerPhotosByTeam={playerPhotosByTeam}
+                matchEvents={matchEvents ?? []}
               />
             </TabsContent>
 
