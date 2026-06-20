@@ -1,8 +1,4 @@
-import {
-  getTiebreakerRoundDeadline,
-  isTiebreakerRoundLocked,
-  matchBelongsToTiebreakerRound,
-} from "@/entities/tiebreaker/lib/roundDeadlines";
+import { matchBelongsToTiebreakerRound } from "@/entities/tiebreaker/lib/roundDeadlines";
 import {
   TIEBREAKER_ROUND_KEYS,
   type TiebreakerRoundKey,
@@ -29,7 +25,7 @@ export interface TiebreakerProfile {
 }
 
 export interface TiebreakerRoundCell {
-  prediction: number;
+  prediction: number | null;
   deviation: number;
 }
 
@@ -47,14 +43,38 @@ export interface TiebreakerStandingsResult {
   rows: TiebreakerStandingRow[];
 }
 
+function getRoundMatches(
+  matches: MatchForStandings[],
+  tiebreakerRoundKey: TiebreakerRoundKey,
+): MatchForStandings[] {
+  return matches.filter((match) =>
+    matchBelongsToTiebreakerRound(match.round_key, tiebreakerRoundKey),
+  );
+}
+
+export function isRoundComplete(
+  matches: MatchForStandings[],
+  tiebreakerRoundKey: TiebreakerRoundKey,
+): boolean {
+  const roundMatches = getRoundMatches(matches, tiebreakerRoundKey);
+
+  if (roundMatches.length === 0) {
+    return false;
+  }
+
+  return roundMatches.every(
+    (match) =>
+      match.status === "finished" &&
+      match.home_score !== null &&
+      match.away_score !== null,
+  );
+}
+
 export function getActualRoundGoals(
   matches: MatchForStandings[],
   tiebreakerRoundKey: TiebreakerRoundKey,
 ): number {
-  return matches
-    .filter((match) =>
-      matchBelongsToTiebreakerRound(match.round_key, tiebreakerRoundKey),
-    )
+  return getRoundMatches(matches, tiebreakerRoundKey)
     .filter(
       (match) =>
         match.status === "finished" &&
@@ -66,28 +86,61 @@ export function getActualRoundGoals(
 
 function getRevealedRounds(
   matches: MatchForStandings[],
-  now: Date,
 ): Record<TiebreakerRoundKey, boolean> {
   return Object.fromEntries(
-    TIEBREAKER_ROUND_KEYS.map((roundKey) => {
-      const deadlineAt = getTiebreakerRoundDeadline(matches, roundKey);
-      return [roundKey, isTiebreakerRoundLocked(deadlineAt, now)];
-    }),
+    TIEBREAKER_ROUND_KEYS.map((roundKey) => [
+      roundKey,
+      isRoundComplete(matches, roundKey),
+    ]),
   ) as Record<TiebreakerRoundKey, boolean>;
+}
+
+function getWorstDeviationByRound({
+  revealedRounds,
+  actualGoalsByRound,
+  decryptedRows,
+}: {
+  revealedRounds: Record<TiebreakerRoundKey, boolean>;
+  actualGoalsByRound: Record<TiebreakerRoundKey, number | null>;
+  decryptedRows: DecryptedTiebreakerEntry[];
+}): Record<TiebreakerRoundKey, number> {
+  const worstDeviationByRound = Object.fromEntries(
+    TIEBREAKER_ROUND_KEYS.map((roundKey) => [roundKey, 0]),
+  ) as Record<TiebreakerRoundKey, number>;
+
+  for (const roundKey of TIEBREAKER_ROUND_KEYS) {
+    if (!revealedRounds[roundKey]) {
+      continue;
+    }
+
+    const actual = actualGoalsByRound[roundKey]!;
+
+    for (const row of decryptedRows) {
+      if (row.round_key !== roundKey) {
+        continue;
+      }
+
+      const deviation = Math.abs(row.goals - actual);
+      if (deviation > worstDeviationByRound[roundKey]) {
+        worstDeviationByRound[roundKey] = deviation;
+      }
+    }
+  }
+
+  return worstDeviationByRound;
 }
 
 export function buildTiebreakerStandings({
   matches,
   decryptedRows,
   profiles,
-  now = new Date(),
 }: {
   matches: MatchForStandings[];
   decryptedRows: DecryptedTiebreakerEntry[];
   profiles: TiebreakerProfile[];
   now?: Date;
 }): TiebreakerStandingsResult {
-  const revealedRounds = getRevealedRounds(matches, now);
+  const revealedRounds = getRevealedRounds(matches);
 
   const actualGoalsByRound = Object.fromEntries(
     TIEBREAKER_ROUND_KEYS.map((roundKey) => [
@@ -97,6 +150,12 @@ export function buildTiebreakerStandings({
         : null,
     ]),
   ) as Record<TiebreakerRoundKey, number | null>;
+
+  const worstDeviationByRound = getWorstDeviationByRound({
+    revealedRounds,
+    actualGoalsByRound,
+    decryptedRows,
+  });
 
   const predictionsByUser = new Map<string, Map<TiebreakerRoundKey, number>>();
 
@@ -119,13 +178,18 @@ export function buildTiebreakerStandings({
           return [roundKey, null];
         }
 
+        const actual = actualGoalsByRound[roundKey]!;
         const prediction = userPredictions?.get(roundKey);
 
         if (prediction === undefined) {
-          return [roundKey, null];
+          return [
+            roundKey,
+            {
+              prediction: null,
+              deviation: worstDeviationByRound[roundKey],
+            },
+          ];
         }
-
-        const actual = actualGoalsByRound[roundKey]!;
 
         return [
           roundKey,
@@ -141,7 +205,8 @@ export function buildTiebreakerStandings({
       (roundKey) => perRound[roundKey]?.deviation,
     ).filter((value): value is number => value !== undefined);
 
-    const overall = deviations.length > 0 ? deviations.reduce((a, b) => a + b, 0) : null;
+    const overall =
+      deviations.length > 0 ? deviations.reduce((a, b) => a + b, 0) : null;
 
     return {
       userId: profile.id,
