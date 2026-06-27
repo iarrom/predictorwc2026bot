@@ -41,6 +41,27 @@ pnpm import:squads
 
 ## Edge Functions
 
+### sync-schedule
+
+Недеструктивное обновление расписания из OpenFootball: подставляет реальные команды в плей-офф по мере завершения раундов, не затирая `status` и счёт (pg_cron каждые 10 минут).
+
+```bash
+supabase functions deploy sync-schedule --project-ref dlwpiikzuwpvbvnjupmn
+```
+
+Vault secret:
+
+- `sync_schedule_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/sync-schedule`
+- `cron_secret` — тот же, что у `sync-live-matches`
+
+Секрет edge function:
+
+```bash
+supabase secrets set CRON_SECRET=... --project-ref dlwpiikzuwpvbvnjupmn
+```
+
+Повторный ручной импорт (`pnpm import:schedule`) тоже безопасен во время турнира — не сбрасывает статус и счёт.
+
 ### sync-live-matches
 
 Синхронизация live-данных с football-data.org (pg_cron каждые 20 секунд).

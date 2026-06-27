@@ -12,6 +12,7 @@ import {
   type PredictionDetail,
 } from "@/features/matches/lib/predictionDetail";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import type { PreviousMatchesByTeam } from "@/features/matches/lib/previousMatches";
 import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { shouldRevealMatchPredictions } from "@/features/matches/lib/shouldRevealMatchPredictions";
 import { MatchEventsTimeline } from "@/features/matches/ui/MatchEventsTimeline";
@@ -26,7 +27,7 @@ import {
   formatMatchKickoffDate,
   formatMatchTime,
 } from "@/shared/lib/formatDate";
-import { formatMatchScore } from "@/shared/lib/formatMatchScore";
+import { MatchScoreDigit } from "@/shared/ui/MatchScoreDisplay";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -52,6 +53,7 @@ interface MatchDetailContentProps {
   canPredict?: boolean;
   canSeePlayerNames?: boolean;
   groupStanding?: GroupStanding;
+  previousMatches?: PreviousMatchesByTeam;
   playerPhotosByTeam?: PlayerPhotosByTeam;
   isUpsetWatch?: boolean;
   expanded?: boolean;
@@ -125,9 +127,21 @@ function MatchDetailCenterFocus({
       )}
 
       {showScore && (
-        <p className="w-full text-center text-2xl font-bold leading-none tabular-nums text-white">
-          {formatMatchScore(homeScore, awayScore)}
-        </p>
+        <div className="flex items-center justify-center gap-1.5">
+          <MatchScoreDigit
+            value={homeScore}
+            size={28}
+            className="text-white"
+          />
+          <span className="font-score text-[15px] leading-none text-white/50">
+            :
+          </span>
+          <MatchScoreDigit
+            value={awayScore}
+            size={28}
+            className="text-white"
+          />
+        </div>
       )}
 
       {live ? (
@@ -224,6 +238,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   canPredict = false,
   canSeePlayerNames = true,
   groupStanding,
+  previousMatches,
   playerPhotosByTeam = {},
   isUpsetWatch = false,
   expanded = false,
@@ -411,6 +426,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               <MatchStatisticsTab
                 match={match}
                 groupStanding={groupStanding}
+                previousMatches={previousMatches}
                 isUpsetWatch={isUpsetWatch}
               />
             </TabsContent>

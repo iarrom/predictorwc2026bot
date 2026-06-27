@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
@@ -25,6 +26,14 @@ const geistMono = Geist_Mono({
 const geistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
+});
+
+const sfScore = localFont({
+  src: "./fonts/SFScore-Compressed.woff2",
+  weight: "400 800",
+  style: "normal",
+  variable: "--font-score-family",
+  display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -54,6 +63,7 @@ export default async function RootLayout({
         geistMono.variable,
         "font-sans",
         inter.variable,
+        sfScore.variable,
       )}
     >
       <body className="flex min-h-full flex-col text-foreground">

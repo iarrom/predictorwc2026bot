@@ -4,6 +4,7 @@ import { memo } from "react";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import type { PreviousMatchesByTeam } from "@/features/matches/lib/previousMatches";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
@@ -22,6 +23,7 @@ interface MatchDrawerSlideProps {
   canSeePlayerNames: boolean;
   playerPhotosByTeam: PlayerPhotosByTeam;
   groupStandingsByName: Record<string, GroupStanding>;
+  previousMatches?: PreviousMatchesByTeam;
   isUpsetWatch?: boolean;
   isActive: boolean;
   isMounted: boolean;
@@ -42,6 +44,7 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
   canSeePlayerNames,
   playerPhotosByTeam,
   groupStandingsByName,
+  previousMatches,
   isUpsetWatch = false,
   isActive,
   isMounted,
@@ -80,6 +83,7 @@ export const MatchDrawerSlide = memo(function MatchDrawerSlide({
               ? groupStandingsByName[match.group_name]
               : undefined
           }
+          previousMatches={previousMatches}
           isUpsetWatch={isUpsetWatch}
           expanded={expanded}
           onRequestExpand={onRequestExpand}

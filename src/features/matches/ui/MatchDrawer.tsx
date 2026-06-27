@@ -10,6 +10,7 @@ import {
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
+import type { PreviousMatchesByTeam } from "@/features/matches/lib/previousMatches";
 import type { PredictionDetail } from "@/features/matches/lib/predictionDetail";
 import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
@@ -62,6 +63,7 @@ interface MatchDrawerProps {
   canSeePlayerNames: boolean;
   playerPhotosByTeam: PlayerPhotosByTeam;
   groupStandingsByName: Record<string, GroupStanding>;
+  previousMatchesByMatch: Record<string, PreviousMatchesByTeam>;
   upsetMatchIds: Set<string>;
   onMatchChange: (matchId: string) => void;
   onClose: () => void;
@@ -80,6 +82,7 @@ export function MatchDrawer({
   canSeePlayerNames,
   playerPhotosByTeam,
   groupStandingsByName,
+  previousMatchesByMatch,
   upsetMatchIds,
   onMatchChange,
   onClose,
@@ -299,6 +302,7 @@ export function MatchDrawer({
                       canSeePlayerNames={canSeePlayerNames}
                       playerPhotosByTeam={playerPhotosByTeam}
                       groupStandingsByName={groupStandingsByName}
+                      previousMatches={previousMatchesByMatch[match.id]}
                       isUpsetWatch={isMatchUpsetWatch(match, upsetMatchIds)}
                       isActive={index === snapIndex}
                       isMounted={mountedIndices.has(index)}

@@ -5,7 +5,9 @@ import { useTranslations } from "next-intl";
 import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match } from "@/entities/match/model/types";
 import { loadMatchModel, type MatchModel } from "@/features/matches/actions";
+import type { PreviousMatchesByTeam } from "@/features/matches/lib/previousMatches";
 import { GroupStandingsCard } from "@/features/matches/ui/GroupStandingsList";
+import { MatchPreviousMatches } from "@/features/matches/ui/MatchPreviousMatches";
 import { UpsetWatchBadge } from "@/features/matches/ui/UpsetWatchBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
@@ -15,6 +17,7 @@ import type { OnsidePlPlayer, OnsideTeamInfo } from "@/shared/lib/onside/types";
 interface MatchStatisticsTabProps {
   match: Match;
   groupStanding?: GroupStanding;
+  previousMatches?: PreviousMatchesByTeam;
   isUpsetWatch?: boolean;
 }
 
@@ -347,6 +350,7 @@ function ModelSkeleton() {
 export function MatchStatisticsTab({
   match,
   groupStanding,
+  previousMatches,
   isUpsetWatch = false,
 }: MatchStatisticsTabProps) {
   const t = useTranslations("matches");
@@ -377,6 +381,15 @@ export function MatchStatisticsTab({
 
   return (
     <div className="flex flex-col gap-5">
+      {previousMatches ? (
+        <MatchPreviousMatches
+          homeTeamName={match.home_team_name}
+          awayTeamName={match.away_team_name}
+          home={previousMatches.home}
+          away={previousMatches.away}
+        />
+      ) : null}
+
       {groupStanding ? (
         <GroupStandingsCard
           group={groupStanding}

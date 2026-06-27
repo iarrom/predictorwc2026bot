@@ -7,6 +7,7 @@ import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
+import { buildPreviousMatchesByMatch } from "@/features/matches/lib/previousMatches";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
 import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
@@ -16,7 +17,6 @@ import { GroupStandingsList } from "@/features/matches/ui/GroupStandingsList";
 import { MatchDrawer } from "@/features/matches/ui/MatchDrawer";
 import { LiveMinuteIndicator } from "@/features/matches/ui/LiveMinuteIndicator";
 import { MatchVoters } from "@/features/matches/ui/MatchVoters";
-import { Badge } from "@/components/ui/badge";
 import {
   Empty,
   EmptyDescription,
@@ -33,7 +33,7 @@ import {
 } from "@/shared/lib/formatDate";
 import { isMatchUpsetWatch } from "@/shared/lib/onside/upsets";
 import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
-import { formatMatchScore } from "@/shared/lib/formatMatchScore";
+import { MatchScoreDigit, MatchScoreStatus } from "@/shared/ui/MatchScoreDisplay";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { cn } from "@/lib/utils";
@@ -59,10 +59,11 @@ const TAB_KEYS: MatchDayBucket[] = ["past", "upcoming3days", "future"];
 const PAST_VISIBLE_DAYS = 3;
 
 const FLAG_SIZE = 28;
-const FEATURED_FLAG_SIZE = 36;
+const FEATURED_FLAG_SIZE = 40;
 const MATCH_CARD_MIN_H = "min-h-[7rem]";
+const FEATURED_MATCH_CARD_MIN_H = "min-h-[8rem]";
 const matchCardGridClassName =
-  "grid w-full grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-start gap-x-2";
+  "grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2";
 
 function isLiveMatch(match: Match): boolean {
   return (
@@ -100,41 +101,7 @@ function toggleCollapsed(
   return next;
 }
 
-function MatchTimeBadge({
-  kickoffAt,
-  locale,
-  live,
-  liveMinute,
-  t,
-}: {
-  kickoffAt: string;
-  locale: Locale;
-  live: boolean;
-  liveMinute: string | null;
-  t: ReturnType<typeof useTranslations<"matches">>;
-}) {
-  return (
-    <Badge
-      variant="secondary"
-      className={cn(
-        "h-4 shrink-0 rounded-md border-0 bg-white/10 px-1.5 text-[10px] font-medium text-foreground",
-        !live && "tabular-nums",
-        live && "border-0 bg-red-500/15 text-red-300",
-      )}
-    >
-      {live ? (
-        <LiveMinuteIndicator
-          liveMinute={liveMinute}
-          liveLabel={t("live")}
-        />
-      ) : (
-        formatMatchTime(kickoffAt, locale)
-      )}
-    </Badge>
-  );
-}
-
-function MatchCenterFocus({
+function MatchCardScoreMeta({
   prediction,
   locked,
   live,
@@ -144,7 +111,6 @@ function MatchCenterFocus({
   homeTeamName,
   awayTeamName,
   points,
-  featured = false,
   outcomeMessages,
   t,
 }: {
@@ -157,81 +123,107 @@ function MatchCenterFocus({
   homeTeamName: string;
   awayTeamName: string;
   points: number | null;
-  featured?: boolean;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
-  const scoreClassName = featured
-    ? "w-full text-center text-[20px] font-bold leading-none tabular-nums"
-    : "w-full text-center text-[17px] font-bold leading-none tabular-nums";
-
   if (finished) {
+    if (prediction) {
+      return (
+        <span
+          className={cn(
+            "text-center text-[11px] font-semibold leading-none tabular-nums",
+            points && points > 0 ? "text-emerald-300" : "text-muted-foreground",
+          )}
+        >
+          {points && points > 0
+            ? t("ptsPositive", { count: points })
+            : t("pts", { count: points ?? 0 })}
+        </span>
+      );
+    }
+
+    if (!locked) {
+      return (
+        <span className="text-center text-[11px] font-medium leading-none text-muted-foreground">
+          {t("noPick")}
+        </span>
+      );
+    }
+
     return (
-      <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1.5 self-center">
-        <p className={scoreClassName}>
-          {formatMatchScore(homeScore, awayScore)}
-        </p>
-        {prediction ? (
-          <span
-            className={cn(
-              "text-center text-[11px] font-semibold leading-none tabular-nums",
-              points && points > 0 ? "text-emerald-300" : "text-muted-foreground",
-            )}
-          >
-            {points && points > 0
-              ? t("ptsPositive", { count: points })
-              : t("pts", { count: points ?? 0 })}
-          </span>
-        ) : (
-          <span className="text-center text-[11px] font-medium leading-none text-muted-foreground">
-            {locked ? t("missed") : t("noPick")}
-          </span>
-        )}
-      </div>
+      <span className="text-center text-[11px] font-medium leading-none text-muted-foreground">
+        {t("missed")}
+      </span>
     );
   }
 
-  return (
-    <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1.5 self-center">
-      {prediction ? (
-        <>
-          <p
-            className={cn(
-              "w-full truncate text-center text-[13px] font-semibold leading-tight",
-              livePredictionTextClass(
+  if (prediction) {
+    return (
+      <span
+        className={cn(
+          "w-full truncate text-center text-[11px] font-semibold leading-none",
+          live
+            ? livePredictionTextClass(
                 live,
                 prediction.outcome,
                 homeScore,
                 awayScore,
-              ),
-            )}
-          >
-            {formatOutcomeWins(
+              )
+            : "text-muted-foreground",
+        )}
+      >
+        {live
+          ? formatOutcomeWins(
               prediction.outcome,
               homeTeamName,
               awayTeamName,
               outcomeMessages,
-            )}
-          </p>
-          <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
-            {t("myPick")}
-          </span>
-        </>
-      ) : locked ? (
-        <p className="text-center text-[13px] font-medium text-muted-foreground">
-          {t("missed")}
-        </p>
-      ) : (
-        <p className="text-center text-[13px] font-medium text-red-300">
-          {t("noPick")}
-        </p>
-      )}
+            )
+          : t("myPick")}
+      </span>
+    );
+  }
 
-      {live && (
-        <p className={cn(scoreClassName, "text-white")}>
-          {formatMatchScore(homeScore, awayScore)}
-        </p>
+  if (!locked) {
+    return (
+      <span
+        className={cn(
+          "text-center text-[11px] font-medium leading-none",
+          live ? "text-red-300" : "text-muted-foreground",
+        )}
+      >
+        {t("noPick")}
+      </span>
+    );
+  }
+
+  return (
+    <span className="text-center text-[11px] font-medium leading-none text-muted-foreground">
+      {t("missed")}
+    </span>
+  );
+}
+
+function MatchCardTeamBlock({
+  name,
+  flagSize,
+  className,
+}: {
+  name: string;
+  flagSize: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5",
+        className,
       )}
+    >
+      <TeamFlag name={name} size={flagSize} />
+      <span className="line-clamp-2 w-full text-center text-[11px] font-medium leading-tight text-white/85">
+        {name}
+      </span>
     </div>
   );
 }
@@ -270,9 +262,7 @@ function renderMatchCard({
     : null;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const flagSize = featured ? FEATURED_FLAG_SIZE : FLAG_SIZE;
-  const teamNameClassName = featured
-    ? "line-clamp-2 w-full text-center text-[13px] font-medium leading-tight"
-    : "line-clamp-2 w-full text-center text-[11px] font-medium leading-tight";
+  const showScore = live || finished;
 
   return (
     <button
@@ -280,65 +270,98 @@ function renderMatchCard({
       onClick={() => onOpen(match.id)}
       aria-pressed={isSelected}
       className={cn(
-        "flex w-full flex-col items-stretch justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
-        MATCH_CARD_MIN_H,
+        "flex w-full flex-col justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
+        featured ? FEATURED_MATCH_CARD_MIN_H : MATCH_CARD_MIN_H,
         "border-t border-white/[0.08]",
         isSelected && "bg-white/[0.05]",
       )}
     >
-      <div className="mb-1.5 grid w-full grid-cols-[1fr_auto_1fr] items-center gap-x-2">
+      <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
         <div className="flex min-w-0 items-center justify-start">
-          <MatchVoters voters={voters} compact />
+          {!finished && <MatchVoters voters={voters} compact />}
         </div>
 
-        <div className="flex min-w-0 items-center justify-center gap-1">
-          {isUpsetWatch ? (
-            <span className="text-[11px]" aria-label={t("upsetWatch")}>
+        <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
+          {formatMatchSubtitle(match, t)}
+        </p>
+
+        <div className="flex min-w-0 items-center justify-end gap-1">
+          {isUpsetWatch && !finished ? (
+            <span
+              aria-label={t("upsetWatch")}
+              className="text-sm leading-none"
+              role="img"
+            >
               🔥
             </span>
           ) : null}
-          <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
-            {formatMatchSubtitle(match, t)}
-          </p>
-        </div>
-
-        <div className="flex min-w-0 items-center justify-end">
-          {!finished && (
-            <MatchTimeBadge
-              kickoffAt={match.kickoff_at}
-              locale={locale}
-              live={live}
-              liveMinute={liveMinute}
-              t={t}
-            />
-          )}
         </div>
       </div>
 
       <div className={matchCardGridClassName}>
-        <div className="flex min-w-0 flex-col items-center gap-1.5">
-          <TeamFlag name={match.home_team_name} size={flagSize} />
-          <p className={teamNameClassName}>{match.home_team_name}</p>
+        <div className="flex min-w-0 items-start gap-1.5">
+          <MatchCardTeamBlock
+            name={match.home_team_name}
+            flagSize={flagSize}
+          />
+          {showScore && (
+            <MatchScoreDigit
+              value={match.home_score ?? 0}
+              size={flagSize}
+              className="ml-auto text-white"
+            />
+          )}
         </div>
 
-        <MatchCenterFocus
-          prediction={prediction}
-          locked={locked}
-          live={live}
-          finished={finished}
-          homeScore={match.home_score ?? 0}
-          awayScore={match.away_score ?? 0}
-          homeTeamName={match.home_team_name}
-          awayTeamName={match.away_team_name}
-          points={points}
-          featured={featured}
-          outcomeMessages={outcomeMessages}
-          t={t}
-        />
+        <div className="flex shrink-0 flex-col items-center gap-1 self-start px-1">
+          <div
+            className="flex items-center justify-center"
+            style={{ height: flagSize }}
+          >
+            {live ? (
+              <LiveMinuteIndicator
+                liveMinute={liveMinute}
+                liveLabel={t("live")}
+                className="text-[11px] font-semibold text-red-300"
+              />
+            ) : finished ? (
+              <MatchScoreStatus className="text-[13px] text-foreground">
+                {t("finished")}
+              </MatchScoreStatus>
+            ) : (
+              <span className="text-[15px] font-semibold leading-none tabular-nums text-foreground">
+                {formatMatchTime(match.kickoff_at, locale)}
+              </span>
+            )}
+          </div>
+          <MatchCardScoreMeta
+            prediction={prediction}
+            locked={locked}
+            live={live}
+            finished={finished}
+            homeScore={match.home_score ?? 0}
+            awayScore={match.away_score ?? 0}
+            homeTeamName={match.home_team_name}
+            awayTeamName={match.away_team_name}
+            points={points}
+            outcomeMessages={outcomeMessages}
+            t={t}
+          />
+        </div>
 
-        <div className="flex min-w-0 flex-col items-center gap-1.5">
-          <TeamFlag name={match.away_team_name} size={flagSize} />
-          <p className={teamNameClassName}>{match.away_team_name}</p>
+        <div className="flex min-w-0 items-start gap-1.5">
+          {showScore && (
+            <MatchScoreDigit
+              value={match.away_score ?? 0}
+              size={flagSize}
+              className="text-white"
+            />
+          )}
+          <MatchCardTeamBlock
+            name={match.away_team_name}
+            flagSize={flagSize}
+            className="ml-auto"
+          />
         </div>
       </div>
     </button>
@@ -460,6 +483,11 @@ export function MatchesView({
   const groupStandingsByName = useMemo(
     () => Object.fromEntries(groupStandings.map((group) => [group.groupName, group])),
     [groupStandings],
+  );
+
+  const previousMatchesByMatch = useMemo(
+    () => buildPreviousMatchesByMatch(matches),
+    [matches],
   );
 
   const openMatch = useCallback(
@@ -650,6 +678,7 @@ export function MatchesView({
         canPredict={canPredict}
         canSeePlayerNames={canSeePlayerNames}
         groupStandingsByName={groupStandingsByName}
+        previousMatchesByMatch={previousMatchesByMatch}
         upsetMatchIds={upsetMatchIds}
         onMatchChange={handleMatchChange}
         onClose={closeMatch}
