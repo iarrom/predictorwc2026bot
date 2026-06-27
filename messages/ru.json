@@ -9,7 +9,8 @@
     "tiebreaker": "Тай-брейк",
     "leaderboard": "Рейтинг",
     "settings": "Настройки",
-    "admin": "Админ"
+    "admin": "Админ",
+    "brackets": "Сетка"
   },
   "common": {
     "save": "Сохранить",
@@ -31,6 +32,7 @@
       "votingRequiresApproval": "Голосование доступно после одобрения администратором.",
       "matchNotFound": "Матч не найден",
       "predictionsLocked": "Прогнозы закрыты после начала матча",
+      "drawNotAllowedKnockout": "В матчах плей-офф нужно выбрать команду, которая проходит дальше",
       "tiebreakerRequiresApproval": "Тай-брейк доступен после одобрения аккаунта",
       "invalidRound": "Некорректный раунд",
       "goalsRange": "Голы должны быть целым числом от 0 до {max}",
@@ -135,6 +137,8 @@
       "draw": "Ничья",
       "homeWins": "Победа {team}",
       "awayWins": "Победа {team}",
+      "homeAdvances": "{team} проходит",
+      "awayAdvances": "{team} проходит",
       "drawShort": "X · Ничья",
       "homeShort": "1 · {team}",
       "awayShort": "2 · {team}"
@@ -299,6 +303,25 @@
       "alreadyPredicted": "Пользователь уже сделал пик",
       "sendFailed": "Не удалось отправить сообщение в Telegram",
       "noPending": "Нет участников без пика"
+    }
+  },
+  "brackets": {
+    "title": "Сетка",
+    "close": "Закрыть сетку",
+    "loading": "Загрузка сетки…",
+    "loadError": "Не удалось загрузить данные сетки. Попробуйте позже.",
+    "tbd": "Уточняется",
+    "final": "Финал",
+    "thirdPlace": "Матч за 3-е место",
+    "prevStage": "Предыдущая стадия",
+    "nextStage": "Следующая стадия",
+    "stages": {
+      "groups": "Групповой этап",
+      "round_of_32": "1/16 финала",
+      "round_of_16": "1/8 финала",
+      "quarter_final": "Четвертьфинал",
+      "semi_final": "Полуфинал",
+      "final": "Финал"
     }
   },
   "errors": {

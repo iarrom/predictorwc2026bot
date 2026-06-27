@@ -59,9 +59,7 @@ const TAB_KEYS: MatchDayBucket[] = ["past", "upcoming3days", "future"];
 const PAST_VISIBLE_DAYS = 3;
 
 const FLAG_SIZE = 28;
-const FEATURED_FLAG_SIZE = 40;
 const MATCH_CARD_MIN_H = "min-h-[7rem]";
-const FEATURED_MATCH_CARD_MIN_H = "min-h-[8rem]";
 const matchCardGridClassName =
   "grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-start gap-x-2";
 
@@ -233,7 +231,6 @@ function renderMatchCard({
   prediction,
   voters,
   isSelected,
-  featured = false,
   isUpsetWatch = false,
   locale,
   outcomeMessages,
@@ -244,7 +241,6 @@ function renderMatchCard({
   prediction: PredictionDetail | undefined;
   voters: MatchVoterInfo;
   isSelected: boolean;
-  featured?: boolean;
   isUpsetWatch?: boolean;
   locale: Locale;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
@@ -261,7 +257,6 @@ function renderMatchCard({
     ? (prediction?.points_awarded ?? null)
     : null;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
-  const flagSize = featured ? FEATURED_FLAG_SIZE : FLAG_SIZE;
   const showScore = live || finished;
 
   return (
@@ -271,7 +266,7 @@ function renderMatchCard({
       aria-pressed={isSelected}
       className={cn(
         "flex w-full flex-col justify-center px-3 py-2 text-left transition-colors hover:bg-white/[0.03]",
-        featured ? FEATURED_MATCH_CARD_MIN_H : MATCH_CARD_MIN_H,
+        MATCH_CARD_MIN_H,
         "border-t border-white/[0.08]",
         isSelected && "bg-white/[0.05]",
       )}
@@ -302,12 +297,12 @@ function renderMatchCard({
         <div className="flex min-w-0 items-start gap-1.5">
           <MatchCardTeamBlock
             name={match.home_team_name}
-            flagSize={flagSize}
+            flagSize={FLAG_SIZE}
           />
           {showScore && (
             <MatchScoreDigit
               value={match.home_score ?? 0}
-              size={flagSize}
+              size={FLAG_SIZE}
               className="ml-auto text-white"
             />
           )}
@@ -316,7 +311,7 @@ function renderMatchCard({
         <div className="flex shrink-0 flex-col items-center gap-1 self-start px-1">
           <div
             className="flex items-center justify-center"
-            style={{ height: flagSize }}
+            style={{ height: FLAG_SIZE }}
           >
             {live ? (
               <LiveMinuteIndicator
@@ -353,13 +348,13 @@ function renderMatchCard({
           {showScore && (
             <MatchScoreDigit
               value={match.away_score ?? 0}
-              size={flagSize}
+              size={FLAG_SIZE}
               className="text-white"
             />
           )}
           <MatchCardTeamBlock
             name={match.away_team_name}
-            flagSize={flagSize}
+            flagSize={FLAG_SIZE}
             className="ml-auto"
           />
         </div>
@@ -585,7 +580,6 @@ export function MatchesView({
                       prediction: predictionMap[match.id],
                       voters: voterMap[match.id] ?? { count: 0 },
                       isSelected: selectedMatchId === match.id,
-                      featured: true,
                       isUpsetWatch: isMatchUpsetWatch(match, upsetMatchIds),
                       locale,
                       outcomeMessages,

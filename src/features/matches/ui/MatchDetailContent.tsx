@@ -362,6 +362,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               ) : (
                 <PredictionForm
                   matchId={match.id}
+                  roundKey={match.round_key}
                   homeTeamName={match.home_team_name}
                   awayTeamName={match.away_team_name}
                   initial={

@@ -25,6 +25,8 @@ export interface TeamLineup {
   bench: LineupPlayer[];
 }
 
+export type MatchWinner = "home" | "away" | "draw";
+
 export interface Match {
   id: string;
   external_key: string;
@@ -41,6 +43,9 @@ export interface Match {
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
+  winner: MatchWinner | null;
+  home_penalties: number | null;
+  away_penalties: number | null;
   fd_match_id: number | null;
   minute: number | null;
   injury_time: number | null;

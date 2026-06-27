@@ -9,7 +9,8 @@
     "tiebreaker": "Tie-break",
     "leaderboard": "Leaderboard",
     "settings": "Settings",
-    "admin": "Admin"
+    "admin": "Admin",
+    "brackets": "Brackets"
   },
   "common": {
     "save": "Save",
@@ -31,6 +32,7 @@
       "votingRequiresApproval": "Voting is available after an admin approves your account.",
       "matchNotFound": "Match not found",
       "predictionsLocked": "Predictions are locked after kickoff",
+      "drawNotAllowedKnockout": "In knockout matches you must pick the team that advances",
       "tiebreakerRequiresApproval": "Tie-breaker picks are available after account approval",
       "invalidRound": "Invalid round",
       "goalsRange": "Goals must be an integer between 0 and {max}",
@@ -135,6 +137,8 @@
       "draw": "Draw",
       "homeWins": "{team} wins",
       "awayWins": "{team} wins",
+      "homeAdvances": "{team} advances",
+      "awayAdvances": "{team} advances",
       "drawShort": "X · Draw",
       "homeShort": "1 · {team}",
       "awayShort": "2 · {team}"
@@ -299,6 +303,25 @@
       "alreadyPredicted": "User already submitted a pick",
       "sendFailed": "Failed to send Telegram message",
       "noPending": "No participants without a pick"
+    }
+  },
+  "brackets": {
+    "title": "Brackets",
+    "close": "Close brackets",
+    "loading": "Loading bracket…",
+    "loadError": "Could not load bracket data. Try again later.",
+    "tbd": "TBD",
+    "final": "Final",
+    "thirdPlace": "Third Place Match",
+    "prevStage": "Previous stage",
+    "nextStage": "Next stage",
+    "stages": {
+      "groups": "Group stage",
+      "round_of_32": "Round of 32",
+      "round_of_16": "Round of 16",
+      "quarter_final": "Quarter-finals",
+      "semi_final": "Semi-finals",
+      "final": "Final"
     }
   },
   "errors": {

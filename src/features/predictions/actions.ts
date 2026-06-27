@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
+import { isKnockoutRound } from "@/entities/match/lib/isKnockoutRound";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId, isParticipant } from "@/shared/lib/auth";
 import { encryptOutcome } from "@/shared/lib/predictions-crypto";
@@ -43,6 +44,9 @@ export async function savePrediction(
     .single();
 
   if (matchError || !match) return { error: t("matchNotFound") };
+  if (isKnockoutRound(match.round_key) && outcome === "draw") {
+    return { error: t("drawNotAllowedKnockout") };
+  }
   if (new Date(match.kickoff_at) <= new Date()) {
     return { error: t("predictionsLocked") };
   }

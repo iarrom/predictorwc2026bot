@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import type { Match } from "@/entities/match/model/types";
-import { projectPredictionPoints } from "@/entities/prediction/lib/scoring";
+import { projectPredictionPoints, scorePrediction } from "@/entities/prediction/lib/scoring";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import type { MatchPredictionEntry } from "@/features/matches/lib/predictionsByMatch";
 import { getInitials } from "@/features/matches/lib/voterInfo";
@@ -33,6 +33,15 @@ function resolveEntryPoints(
   }
 
   if (match.home_score !== null && match.away_score !== null) {
+    if (match.status === "finished") {
+      return scorePrediction(entry.outcome, {
+        round_key: match.round_key,
+        home_score: match.home_score,
+        away_score: match.away_score,
+        winner: match.winner,
+      });
+    }
+
     return projectPredictionPoints(
       entry.outcome,
       match.home_score,

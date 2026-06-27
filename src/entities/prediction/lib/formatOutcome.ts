@@ -4,6 +4,8 @@ export interface OutcomeMessages {
   draw: string;
   homeWins: (team: string) => string;
   awayWins: (team: string) => string;
+  homeAdvances?: (team: string) => string;
+  awayAdvances?: (team: string) => string;
   drawShort?: string;
   homeShort?: (team: string) => string;
   awayShort?: (team: string) => string;
@@ -54,7 +56,19 @@ export function formatOutcomeWins(
   homeTeamName: string,
   awayTeamName: string,
   messages: OutcomeMessages = defaultMessages,
+  options?: { knockout?: boolean },
 ): string {
+  if (options?.knockout) {
+    switch (outcome) {
+      case "home":
+        return messages.homeAdvances?.(homeTeamName) ?? messages.homeWins(homeTeamName);
+      case "draw":
+        return messages.draw;
+      case "away":
+        return messages.awayAdvances?.(awayTeamName) ?? messages.awayWins(awayTeamName);
+    }
+  }
+
   switch (outcome) {
     case "home":
       return messages.homeWins(homeTeamName);

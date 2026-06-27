@@ -13,6 +13,7 @@ const matches = [
     status: "finished",
     home_score: 2,
     away_score: 1,
+    winner: null,
   },
   {
     id: "match-g1-2",
@@ -20,6 +21,7 @@ const matches = [
     status: "finished",
     home_score: 0,
     away_score: 0,
+    winner: null,
   },
   {
     id: "match-g2-1",
@@ -27,6 +29,7 @@ const matches = [
     status: "finished",
     home_score: 1,
     away_score: 0,
+    winner: null,
   },
   {
     id: "match-g2-2",
@@ -34,6 +37,7 @@ const matches = [
     status: "finished",
     home_score: 0,
     away_score: 1,
+    winner: null,
   },
   {
     id: "match-g2-live",
@@ -41,6 +45,7 @@ const matches = [
     status: "live",
     home_score: 1,
     away_score: 0,
+    winner: null,
   },
 ];
 
@@ -199,5 +204,36 @@ describe("buildLeaderboardAnalytics", () => {
         position: 1,
       },
     ]);
+  });
+
+  it("scores knockout matches by advancing team from winner", () => {
+    const analytics = buildLeaderboardAnalytics({
+      matches: [
+        {
+          id: "match-qf",
+          round_key: "quarter_final",
+          status: "finished",
+          home_score: 1,
+          away_score: 1,
+          winner: "home",
+        },
+      ],
+      profiles,
+      predictions: [
+        { user_id: "user-a", match_id: "match-qf", outcome: "home" },
+        { user_id: "user-b", match_id: "match-qf", outcome: "draw" },
+      ],
+    });
+
+    expect(analytics.overall[0]).toMatchObject({
+      user_id: "user-a",
+      total_points: 1,
+      rank: 1,
+    });
+    expect(analytics.overall[1]).toMatchObject({
+      user_id: "user-b",
+      total_points: 0,
+      rank: 2,
+    });
   });
 });

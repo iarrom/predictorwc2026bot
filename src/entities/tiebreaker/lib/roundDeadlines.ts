@@ -1,4 +1,5 @@
 import type { TiebreakerRoundKey } from "@/entities/tiebreaker/model/types";
+import { isKnockoutRound } from "@/entities/match/lib/isKnockoutRound";
 
 interface MatchKickoff {
   round_key: string;
@@ -10,7 +11,7 @@ export function matchBelongsToTiebreakerRound(
   tiebreakerRoundKey: TiebreakerRoundKey,
 ): boolean {
   if (tiebreakerRoundKey === "playoff") {
-    return !matchRoundKey.startsWith("group_");
+    return isKnockoutRound(matchRoundKey);
   }
 
   return matchRoundKey === tiebreakerRoundKey;

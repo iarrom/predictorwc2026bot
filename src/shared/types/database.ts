@@ -83,6 +83,9 @@ export interface Database {
           status: MatchStatus;
           home_score: number | null;
           away_score: number | null;
+          winner: PredictionOutcome | null;
+          home_penalties: number | null;
+          away_penalties: number | null;
           fd_match_id: number | null;
           minute: number | null;
           injury_time: number | null;
@@ -109,6 +112,9 @@ export interface Database {
           status?: MatchStatus;
           home_score?: number | null;
           away_score?: number | null;
+          winner?: PredictionOutcome | null;
+          home_penalties?: number | null;
+          away_penalties?: number | null;
           fd_match_id?: number | null;
           minute?: number | null;
           injury_time?: number | null;

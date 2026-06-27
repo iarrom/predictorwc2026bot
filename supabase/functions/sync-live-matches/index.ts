@@ -86,6 +86,8 @@ interface FdMatch {
   awayTeam: FdTeamSide;
   score: {
     fullTime: { home: number | null; away: number | null };
+    winner: string | null;
+    penalties?: { home: number | null; away: number | null };
   };
   goals: FdGoal[];
   bookings: FdBooking[];
@@ -165,6 +167,15 @@ function teamSide(
     return "home";
   }
   return "away";
+}
+
+function mapFdWinner(
+  winner: string | null | undefined,
+): "home" | "away" | "draw" | null {
+  if (winner === "HOME_TEAM") return "home";
+  if (winner === "AWAY_TEAM") return "away";
+  if (winner === "DRAW") return "draw";
+  return null;
 }
 
 function buildLineupPayload(team: FdTeamSide): LineupPayload | null {
@@ -535,6 +546,18 @@ Deno.serve(async (req) => {
           away_score: effectiveMatch.score.fullTime.away,
           updated_at: new Date().toISOString(),
         };
+
+        if (status === "finished") {
+          const winner = mapFdWinner(effectiveMatch.score.winner);
+          if (winner) {
+            updatePayload.winner = winner;
+          }
+        }
+
+        if (effectiveMatch.score.penalties) {
+          updatePayload.home_penalties = effectiveMatch.score.penalties.home;
+          updatePayload.away_penalties = effectiveMatch.score.penalties.away;
+        }
 
         if (homeLineup) updatePayload.home_lineup = homeLineup;
         if (awayLineup) updatePayload.away_lineup = awayLineup;

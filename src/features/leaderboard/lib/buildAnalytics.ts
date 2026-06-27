@@ -1,4 +1,4 @@
-import { projectPredictionPoints } from "@/entities/prediction/lib/scoring";
+import { scorePrediction } from "@/entities/prediction/lib/scoring";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
 import type { TiebreakerRoundKey } from "@/entities/tiebreaker/model/types";
 
@@ -22,6 +22,7 @@ export interface MatchForAnalytics {
   status: string;
   home_score: number | null;
   away_score: number | null;
+  winner: PredictionOutcome | null;
 }
 
 export interface PredictionForAnalytics {
@@ -248,11 +249,12 @@ export function buildLeaderboardAnalytics(input: {
     const match = matchMap.get(prediction.match_id);
     if (!match || !scoredMatchIds.has(prediction.match_id)) continue;
 
-    const points = projectPredictionPoints(
-      prediction.outcome,
-      match.home_score!,
-      match.away_score!,
-    );
+    const points = scorePrediction(prediction.outcome, {
+      round_key: match.round_key,
+      home_score: match.home_score,
+      away_score: match.away_score,
+      winner: match.winner,
+    });
 
     player.totalPoints += points;
 

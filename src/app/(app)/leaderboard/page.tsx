@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
   ] = await Promise.all([
     supabase
       .from("matches")
-      .select("id, round_key, status, home_score, away_score"),
+      .select("id, round_key, status, home_score, away_score, winner"),
     supabase
       .from("predictions")
       .select("match_id, user_id, outcome_encrypted"),

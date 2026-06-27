@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
+import { isKnockoutRound } from "@/entities/match/lib/isKnockoutRound";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
 import { savePrediction } from "@/features/predictions/actions";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
@@ -13,11 +14,22 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PredictionFormProps {
   matchId: string;
+  roundKey: string;
   homeTeamName: string;
   awayTeamName: string;
   initial?: { outcome: PredictionOutcome };
   locked: boolean;
   canPredict: boolean;
+}
+
+function normalizeOutcome(
+  outcome: PredictionOutcome | undefined,
+  isKnockout: boolean,
+): PredictionOutcome {
+  if (!outcome || (isKnockout && outcome === "draw")) {
+    return "home";
+  }
+  return outcome;
 }
 
 const outcomeTabClassName =
@@ -29,6 +41,7 @@ function PredictionSummary({
   awayTeamName,
   onEdit,
   outcomeMessages,
+  isKnockout,
   t,
 }: {
   outcome: PredictionOutcome;
@@ -36,13 +49,20 @@ function PredictionSummary({
   awayTeamName: string;
   onEdit: () => void;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  isKnockout: boolean;
   t: ReturnType<typeof useTranslations<"predictions">>;
 }) {
   return (
     <div className="flex w-full min-h-0 flex-1 flex-col justify-between gap-4">
       <div className="flex flex-col gap-1 text-center">
         <p className="text-lg font-bold leading-tight text-white">
-          {formatOutcomeWins(outcome, homeTeamName, awayTeamName, outcomeMessages)}
+          {formatOutcomeWins(
+            outcome,
+            homeTeamName,
+            awayTeamName,
+            outcomeMessages,
+            { knockout: isKnockout },
+          )}
         </p>
       </div>
       <Button
@@ -60,12 +80,14 @@ function PredictionSummary({
 
 export function PredictionForm({
   matchId,
+  roundKey,
   homeTeamName,
   awayTeamName,
   initial,
   locked,
   canPredict,
 }: PredictionFormProps) {
+  const isKnockout = isKnockoutRound(roundKey);
   const router = useRouter();
   const t = useTranslations("predictions");
   const tOutcome = useTranslations("match.outcome");
@@ -91,8 +113,8 @@ export function PredictionForm({
     },
     null,
   );
-  const [outcome, setOutcome] = useState<PredictionOutcome>(
-    initial?.outcome ?? "home",
+  const [outcome, setOutcome] = useState<PredictionOutcome>(() =>
+    normalizeOutcome(initial?.outcome, isKnockout),
   );
 
   const summaryOutcome =
@@ -108,6 +130,7 @@ export function PredictionForm({
                 homeTeamName,
                 awayTeamName,
                 outcomeMessages,
+                { knockout: isKnockout },
               ),
             })
           : t("locked")}
@@ -129,6 +152,7 @@ export function PredictionForm({
         awayTeamName={awayTeamName}
         onEdit={() => setMode("edit")}
         outcomeMessages={outcomeMessages}
+        isKnockout={isKnockout}
         t={t}
       />
     );
@@ -157,10 +181,12 @@ export function PredictionForm({
                   {homeTeamName}
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="draw" className={outcomeTabClassName}>
-                <span className="text-lg font-bold">X</span>
-                <span className="text-[10px] leading-tight">{t("draw")}</span>
-              </TabsTrigger>
+              {!isKnockout && (
+                <TabsTrigger value="draw" className={outcomeTabClassName}>
+                  <span className="text-lg font-bold">X</span>
+                  <span className="text-[10px] leading-tight">{t("draw")}</span>
+                </TabsTrigger>
+              )}
               <TabsTrigger value="away" className={outcomeTabClassName}>
                 <span className="text-lg font-bold">2</span>
                 <span className="line-clamp-2 text-[10px] leading-tight">

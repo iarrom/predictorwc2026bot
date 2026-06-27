@@ -9,7 +9,8 @@
     "tiebreaker": "Dogrywka",
     "leaderboard": "Ranking",
     "settings": "Ustawienia",
-    "admin": "Admin"
+    "admin": "Admin",
+    "brackets": "Drabinka"
   },
   "common": {
     "save": "Zapisz",
@@ -31,6 +32,7 @@
       "votingRequiresApproval": "Głosowanie dostępne po zatwierdzeniu konta przez admina.",
       "matchNotFound": "Nie znaleziono meczu",
       "predictionsLocked": "Typy zamknięte po rozpoczęciu meczu",
+      "drawNotAllowedKnockout": "W meczach pucharowych wybierz drużynę, która awansuje",
       "tiebreakerRequiresApproval": "Dogrywka dostępna po zatwierdzeniu konta",
       "invalidRound": "Nieprawidłowa runda",
       "goalsRange": "Gole muszą być liczbą całkowitą od 0 do {max}",
@@ -135,6 +137,8 @@
       "draw": "Remis",
       "homeWins": "Wygrana {team}",
       "awayWins": "Wygrana {team}",
+      "homeAdvances": "{team} awansuje",
+      "awayAdvances": "{team} awansuje",
       "drawShort": "X · Remis",
       "homeShort": "1 · {team}",
       "awayShort": "2 · {team}"
@@ -299,6 +303,25 @@
       "alreadyPredicted": "Użytkownik już obstawił",
       "sendFailed": "Nie udało się wysłać wiadomości Telegram",
       "noPending": "Brak uczestników bez typu"
+    }
+  },
+  "brackets": {
+    "title": "Drabinka",
+    "close": "Zamknij drabinkę",
+    "loading": "Ładowanie drabinki…",
+    "loadError": "Nie udało się załadować drabinki. Spróbuj ponownie później.",
+    "tbd": "Do ustalenia",
+    "final": "Finał",
+    "thirdPlace": "Mecz o 3. miejsce",
+    "prevStage": "Poprzednia runda",
+    "nextStage": "Następna runda",
+    "stages": {
+      "groups": "Faza grupowa",
+      "round_of_32": "1/16 finału",
+      "round_of_16": "1/8 finału",
+      "quarter_final": "Ćwierćfinał",
+      "semi_final": "Półfinał",
+      "final": "Finał"
     }
   },
   "errors": {
