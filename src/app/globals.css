@@ -87,6 +87,10 @@
     --app-bottom-chrome: calc(
         var(--app-tab-bar-height) + var(--app-brackets-nav-height)
     );
+    --app-drawer-scroll-pad-bottom: max(
+        2.5rem,
+        calc(1.5rem + env(safe-area-inset-bottom, 0px))
+    );
 }
 
 .dark {
@@ -224,6 +228,10 @@
 
     .scroll-pad-over-brackets {
         padding-bottom: calc(var(--app-brackets-nav-height) + 0.5rem);
+    }
+
+    .drawer-scroll-pad {
+        padding-bottom: var(--app-drawer-scroll-pad-bottom);
     }
 
     .match-drawer-card {

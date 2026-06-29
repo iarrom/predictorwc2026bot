@@ -297,10 +297,12 @@ export const MatchDetailContent = memo(function MatchDetailContent({
       <div
         className={cn(
           "relative flex min-h-0 flex-1 flex-col px-4",
+          "overflow-y-auto overscroll-contain drawer-scroll-pad",
           expanded
-            ? "overflow-y-auto overscroll-contain pt-[calc(env(safe-area-inset-top,0px)+1.5rem)] pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
-            : "overflow-hidden pb-4 pt-2",
+            ? "pt-[calc(env(safe-area-inset-top,0px)+1.5rem)]"
+            : "pt-2",
         )}
+        data-vaul-no-drag
       >
         <section className="flex shrink-0 flex-col gap-2 pb-5">
           <div className="flex items-center justify-center gap-2">
