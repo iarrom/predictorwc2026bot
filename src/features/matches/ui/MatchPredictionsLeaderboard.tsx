@@ -23,33 +23,28 @@ function resolveEntryPoints(
   entry: MatchPredictionEntry,
   match: Match,
 ): number | null {
-  if (
-    match.status === "finished" &&
-    entry.points_awarded !== null &&
-    match.home_score !== null &&
-    match.away_score !== null
-  ) {
-    return entry.points_awarded;
+  if (match.home_score === null || match.away_score === null) {
+    return null;
   }
 
-  if (match.home_score !== null && match.away_score !== null) {
-    if (match.status === "finished") {
-      return scorePrediction(entry.outcome, {
+  if (match.status === "finished") {
+    return (
+      entry.points_awarded ??
+      scorePrediction(entry.outcome, {
         round_key: match.round_key,
         home_score: match.home_score,
         away_score: match.away_score,
         winner: match.winner,
-      });
-    }
-
-    return projectPredictionPoints(
-      entry.outcome,
-      match.home_score,
-      match.away_score,
+      })
     );
   }
 
-  return null;
+  return projectPredictionPoints(
+    entry.outcome,
+    match.home_score,
+    match.away_score,
+    match.round_key,
+  );
 }
 
 function formatPoints(points: number | null): string {

@@ -6,6 +6,7 @@ import type { GroupStanding } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
+import { scorePrediction } from "@/entities/prediction/lib/scoring";
 import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import {
   toPredictionFormInitial,
@@ -166,6 +167,8 @@ function LockedPredictionSummary({
   prediction,
   homeTeamName,
   awayTeamName,
+  roundKey,
+  winner,
   live,
   homeScore,
   awayScore,
@@ -176,6 +179,8 @@ function LockedPredictionSummary({
   prediction: PredictionDetail | undefined;
   homeTeamName: string;
   awayTeamName: string;
+  roundKey: string;
+  winner: Match["winner"];
   live: boolean;
   homeScore: number;
   awayScore: number;
@@ -189,7 +194,15 @@ function LockedPredictionSummary({
     );
   }
 
-  const points = prediction.points_awarded;
+  const points = finished
+    ? (prediction.points_awarded ??
+      scorePrediction(prediction.outcome, {
+        round_key: roundKey,
+        home_score: homeScore,
+        away_score: awayScore,
+        winner,
+      }))
+    : null;
 
   return (
     <div className="flex w-full flex-col items-center gap-2 text-center">
@@ -351,6 +364,8 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                     prediction={prediction}
                     homeTeamName={match.home_team_name}
                     awayTeamName={match.away_team_name}
+                    roundKey={match.round_key}
+                    winner={match.winner}
                     live={live}
                     homeScore={match.home_score ?? 0}
                     awayScore={match.away_score ?? 0}

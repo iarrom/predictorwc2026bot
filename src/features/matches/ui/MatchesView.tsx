@@ -6,6 +6,7 @@ import { buildGroupStandings } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
+import { scorePrediction } from "@/entities/prediction/lib/scoring";
 import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import { buildPreviousMatchesByMatch } from "@/features/matches/lib/previousMatches";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
@@ -253,9 +254,16 @@ function renderMatchCard({
     match.status === "finished" &&
     match.home_score !== null &&
     match.away_score !== null;
-  const points = finished
-    ? (prediction?.points_awarded ?? null)
-    : null;
+  const points =
+    finished && prediction
+      ? (prediction.points_awarded ??
+        scorePrediction(prediction.outcome, {
+          round_key: match.round_key,
+          home_score: match.home_score,
+          away_score: match.away_score,
+          winner: match.winner,
+        }))
+      : null;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const showScore = live || finished;
 

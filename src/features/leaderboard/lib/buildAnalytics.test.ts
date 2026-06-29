@@ -227,7 +227,7 @@ describe("buildLeaderboardAnalytics", () => {
 
     expect(analytics.overall[0]).toMatchObject({
       user_id: "user-a",
-      total_points: 1,
+      total_points: 4,
       rank: 1,
     });
     expect(analytics.overall[1]).toMatchObject({

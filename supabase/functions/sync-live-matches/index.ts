@@ -1,5 +1,8 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { awardPredictionPoints } from "../_shared/award-prediction-points.ts";
+import { getEncryptionKeyFromEnv } from "../_shared/predictions-crypto.ts";
+import type { PredictionOutcome } from "../_shared/scoring.ts";
 
 const FD_API_BASE = "https://api.football-data.org/v4";
 const WC_COMPETITION = "WC";
@@ -102,6 +105,11 @@ interface DbMatch {
   away_team_name: string;
   venue: string | null;
   fd_last_updated: string | null;
+  round_key: string;
+  status: MatchStatus;
+  home_score: number | null;
+  away_score: number | null;
+  winner: PredictionOutcome | null;
 }
 
 interface LineupPayload {
@@ -432,6 +440,13 @@ Deno.serve(async (req) => {
   const fdToken = Deno.env.get("FOOTBALL_DATA_TOKEN");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  let encryptionKey: Uint8Array | null = null;
+
+  try {
+    encryptionKey = getEncryptionKeyFromEnv();
+  } catch (error) {
+    console.warn("Prediction scoring disabled:", error);
+  }
 
   if (!cronSecret || !fdToken || !supabaseUrl || !serviceRoleKey) {
     return new Response(
@@ -478,7 +493,7 @@ Deno.serve(async (req) => {
     const { data: dbMatches, error: dbError } = await supabase
       .from("matches")
       .select(
-        "id, fd_match_id, kickoff_at, home_team_name, away_team_name, venue, fd_last_updated",
+        "id, fd_match_id, kickoff_at, home_team_name, away_team_name, venue, fd_last_updated, round_key, status, home_score, away_score, winner",
       );
 
     if (dbError) {
@@ -489,6 +504,7 @@ Deno.serve(async (req) => {
     let skipped = 0;
     let eventsUpserted = 0;
     let detailFetches = 0;
+    let pointsAwarded = 0;
 
     const sortedFdMatches = [...fdMatches].sort((a, b) => {
       const priority = (match: FdMatch) => {
@@ -573,6 +589,24 @@ Deno.serve(async (req) => {
         }
       }
 
+      const effectiveStatus = mapFdStatus(effectiveMatch.status);
+      if (effectiveStatus === "finished" && encryptionKey) {
+        const winner = mapFdWinner(effectiveMatch.score.winner) ??
+          dbMatch.winner;
+        const awarded = await awardPredictionPoints(
+          supabase,
+          dbMatch.id,
+          {
+            round_key: dbMatch.round_key,
+            home_score: effectiveMatch.score.fullTime.home,
+            away_score: effectiveMatch.score.fullTime.away,
+            winner,
+          },
+          encryptionKey,
+        );
+        pointsAwarded += awarded;
+      }
+
       if (events.length > 0) {
         const { error: eventsError } = await supabase
           .from("match_events")
@@ -601,6 +635,7 @@ Deno.serve(async (req) => {
         skipped,
         eventsUpserted,
         detailFetches,
+        pointsAwarded,
         requestsLeft,
       }),
       { headers: { "Content-Type": "application/json" } },

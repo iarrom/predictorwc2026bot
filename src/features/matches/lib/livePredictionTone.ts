@@ -1,4 +1,4 @@
-import { projectPredictionPoints } from "@/entities/prediction/lib/scoring";
+import { outcomeFromScore } from "@/entities/prediction/lib/scoring";
 import type { PredictionOutcome } from "@/entities/prediction/model/types";
 
 export function isPredictionOnTrack(
@@ -6,7 +6,7 @@ export function isPredictionOnTrack(
   homeScore: number,
   awayScore: number,
 ): boolean {
-  return projectPredictionPoints(predicted, homeScore, awayScore) === 1;
+  return predicted === outcomeFromScore(homeScore, awayScore);
 }
 
 /** Green when the current score matches the pick; soft red otherwise. */

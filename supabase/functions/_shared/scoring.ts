@@ -1,14 +1,4 @@
-import { isKnockoutRound } from "@/entities/match/lib/isKnockoutRound";
-import type { PredictionOutcome } from "@/entities/prediction/model/types";
-
-export function outcomeFromScore(
-  homeScore: number,
-  awayScore: number,
-): PredictionOutcome {
-  if (homeScore > awayScore) return "home";
-  if (homeScore < awayScore) return "away";
-  return "draw";
-}
+export type PredictionOutcome = "home" | "draw" | "away";
 
 export interface MatchForScoring {
   round_key: string;
@@ -29,12 +19,23 @@ const POINTS_BY_ROUND: Record<string, number> = {
   third_place: 0,
 };
 
-/** Points awarded for a correct pick in the given tournament round. */
+function isKnockoutRound(roundKey: string): boolean {
+  return !roundKey.startsWith("group_");
+}
+
+export function outcomeFromScore(
+  homeScore: number,
+  awayScore: number,
+): PredictionOutcome {
+  if (homeScore > awayScore) return "home";
+  if (homeScore < awayScore) return "away";
+  return "draw";
+}
+
 export function pointsForRound(roundKey: string): number {
   return POINTS_BY_ROUND[roundKey] ?? 1;
 }
 
-/** Outcome used for final scoring (knockout uses advancing team when winner is set). */
 export function resolveScoredOutcome(
   match: MatchForScoring,
 ): PredictionOutcome | null {
@@ -56,16 +57,4 @@ export function scorePrediction(
   const actual = resolveScoredOutcome(match);
   if (!actual) return 0;
   return predicted === actual ? pointsForRound(match.round_key) : 0;
-}
-
-/** Live projection from current full-time score (winner unknown until match ends). */
-export function projectPredictionPoints(
-  predicted: PredictionOutcome,
-  homeScore: number,
-  awayScore: number,
-  roundKey: string,
-): number {
-  return predicted === outcomeFromScore(homeScore, awayScore)
-    ? pointsForRound(roundKey)
-    : 0;
 }

@@ -25,7 +25,8 @@
     "copy:player-photos": "tsx scripts/copy-player-photos.ts",
     "map:fd": "tsx scripts/map-football-data.ts",
     "extract:team-colors": "tsx scripts/extract-team-colors.ts",
-    "encrypt:predictions": "tsx scripts/encrypt-existing-predictions.ts"
+    "encrypt:predictions": "tsx scripts/encrypt-existing-predictions.ts",
+    "award:points": "tsx scripts/award-prediction-points.ts"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.0",
