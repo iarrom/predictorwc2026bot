@@ -95,7 +95,7 @@ export function TiebreakerView({
             </p>
           </div>
 
-          <div className="overflow-y-auto overscroll-contain">
+          <div className="scroll-pad-over-brackets overflow-y-auto overscroll-contain">
             {rounds.map((round) => {
               const interactive =
                 canEdit && !round.locked && Boolean(round.deadlineAt);

@@ -32,7 +32,7 @@ export function LeaderboardTabs({
 
       <TabsContent
         value="overall"
-        className="mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="scroll-pad-over-brackets mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
         <LeaderboardOverallTable
           entries={analytics.overall}
@@ -42,7 +42,7 @@ export function LeaderboardTabs({
 
       <TabsContent
         value="stages"
-        className="mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="scroll-pad-over-brackets mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
         <LeaderboardStageTable
           stages={analytics.stages}
@@ -55,7 +55,7 @@ export function LeaderboardTabs({
 
       <TabsContent
         value="chart"
-        className="mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="scroll-pad-over-brackets mt-0 min-h-0 flex-1 overflow-y-auto overscroll-contain"
       >
         <LeaderboardPositionChart
           analytics={analytics}

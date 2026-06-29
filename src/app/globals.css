@@ -81,6 +81,12 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --app-tab-bar-height: 5rem;
+    --app-brackets-nav-height: 4rem;
+    --app-top-chrome: 3.25rem;
+    --app-bottom-chrome: calc(
+        var(--app-tab-bar-height) + var(--app-brackets-nav-height)
+    );
 }
 
 .dark {
@@ -212,8 +218,12 @@
     .sports-panel-max-h {
         max-height: calc(
             100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) -
-                8.5rem
+                var(--app-top-chrome) - var(--app-bottom-chrome)
         );
+    }
+
+    .scroll-pad-over-brackets {
+        padding-bottom: calc(var(--app-brackets-nav-height) + 0.5rem);
     }
 
     .match-drawer-card {
