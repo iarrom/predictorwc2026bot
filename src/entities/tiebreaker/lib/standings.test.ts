@@ -3,6 +3,7 @@ import {
   buildTiebreakerStandings,
   getActualRoundGoals,
   isRoundComplete,
+  isRoundRevealed,
   type MatchForStandings,
 } from "@/entities/tiebreaker/lib/standings";
 
@@ -46,6 +47,51 @@ describe("isRoundComplete", () => {
 
   it("returns false when the round has no matches", () => {
     expect(isRoundComplete(matches, "group_3")).toBe(false);
+  });
+});
+
+describe("isRoundRevealed", () => {
+  it("reveals playoff after the first finished match", () => {
+    const playoffMatches: MatchForStandings[] = [
+      {
+        round_key: "round_of_32",
+        kickoff_at: "2026-06-28T18:00:00.000Z",
+        status: "finished",
+        home_score: 1,
+        away_score: 0,
+      },
+      {
+        round_key: "round_of_16",
+        kickoff_at: "2026-07-05T18:00:00.000Z",
+        status: "scheduled",
+        home_score: null,
+        away_score: null,
+      },
+    ];
+
+    expect(isRoundRevealed(playoffMatches, "playoff")).toBe(true);
+    expect(isRoundComplete(playoffMatches, "playoff")).toBe(false);
+  });
+
+  it("keeps group rounds hidden until every matchday match finishes", () => {
+    const inProgressMatches: MatchForStandings[] = [
+      {
+        round_key: "group_1",
+        kickoff_at: "2026-06-12T18:00:00.000Z",
+        status: "finished",
+        home_score: 2,
+        away_score: 1,
+      },
+      {
+        round_key: "group_1",
+        kickoff_at: "2026-06-12T20:00:00.000Z",
+        status: "scheduled",
+        home_score: null,
+        away_score: null,
+      },
+    ];
+
+    expect(isRoundRevealed(inProgressMatches, "group_1")).toBe(false);
   });
 });
 
@@ -111,6 +157,39 @@ describe("buildTiebreakerStandings", () => {
     expect(standings.revealedRounds.group_1).toBe(false);
     expect(standings.rows[0]?.perRound.group_1).toBeNull();
     expect(standings.rows[0]?.overall).toBeNull();
+  });
+
+  it("reveals playoff standings with partial actual goals", () => {
+    const playoffMatches: MatchForStandings[] = [
+      {
+        round_key: "round_of_32",
+        kickoff_at: "2026-06-28T18:00:00.000Z",
+        status: "finished",
+        home_score: 2,
+        away_score: 1,
+      },
+      {
+        round_key: "round_of_32",
+        kickoff_at: "2026-06-29T18:00:00.000Z",
+        status: "scheduled",
+        home_score: null,
+        away_score: null,
+      },
+    ];
+
+    const standings = buildTiebreakerStandings({
+      matches: playoffMatches,
+      profiles,
+      decryptedRows: [{ user_id: "user-a", round_key: "playoff", goals: 50 }],
+    });
+
+    expect(standings.revealedRounds.playoff).toBe(true);
+    expect(standings.actualGoalsByRound.playoff).toBe(3);
+    expect(standings.rows[0]?.perRound.playoff).toEqual({
+      prediction: 50,
+      deviation: 47,
+    });
+    expect(standings.rows[0]?.overall).toBe(47);
   });
 
   it("penalizes missing predictions with worst deviation in the round", () => {

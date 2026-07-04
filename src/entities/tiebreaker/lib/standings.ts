@@ -70,6 +70,23 @@ export function isRoundComplete(
   );
 }
 
+/** Playoff standings reveal after the first finished match; group rounds wait for full completion. */
+export function isRoundRevealed(
+  matches: MatchForStandings[],
+  tiebreakerRoundKey: TiebreakerRoundKey,
+): boolean {
+  if (tiebreakerRoundKey === "playoff") {
+    return getRoundMatches(matches, tiebreakerRoundKey).some(
+      (match) =>
+        match.status === "finished" &&
+        match.home_score !== null &&
+        match.away_score !== null,
+    );
+  }
+
+  return isRoundComplete(matches, tiebreakerRoundKey);
+}
+
 export function getActualRoundGoals(
   matches: MatchForStandings[],
   tiebreakerRoundKey: TiebreakerRoundKey,
@@ -90,7 +107,7 @@ function getRevealedRounds(
   return Object.fromEntries(
     TIEBREAKER_ROUND_KEYS.map((roundKey) => [
       roundKey,
-      isRoundComplete(matches, roundKey),
+      isRoundRevealed(matches, roundKey),
     ]),
   ) as Record<TiebreakerRoundKey, boolean>;
 }
