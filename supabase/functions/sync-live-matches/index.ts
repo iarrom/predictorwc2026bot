@@ -89,6 +89,8 @@ interface FdMatch {
   awayTeam: FdTeamSide;
   score: {
     fullTime: { home: number | null; away: number | null };
+    regularTime?: { home: number | null; away: number | null };
+    extraTime?: { home: number | null; away: number | null };
     winner: string | null;
     penalties?: { home: number | null; away: number | null };
   };
@@ -184,6 +186,29 @@ function mapFdWinner(
   if (winner === "AWAY_TEAM") return "away";
   if (winner === "DRAW") return "draw";
   return null;
+}
+
+/** Main score before penalty shootout (regular + extra time). */
+function resolveMainScoreFromFd(
+  score: FdMatch["score"],
+): { home: number | null; away: number | null } {
+  const fullHome = score.fullTime.home;
+  const fullAway = score.fullTime.away;
+
+  if (
+    score.penalties &&
+    fullHome !== null &&
+    fullAway !== null &&
+    score.penalties.home !== null &&
+    score.penalties.away !== null
+  ) {
+    return {
+      home: fullHome - score.penalties.home,
+      away: fullAway - score.penalties.away,
+    };
+  }
+
+  return { home: fullHome, away: fullAway };
 }
 
 function buildLineupPayload(team: FdTeamSide): LineupPayload | null {
@@ -551,6 +576,8 @@ Deno.serve(async (req) => {
         const awayLineup = buildLineupPayload(effectiveMatch.awayTeam);
         const status = mapFdStatus(effectiveMatch.status);
 
+        const mainScore = resolveMainScoreFromFd(effectiveMatch.score);
+
         const updatePayload: Record<string, unknown> = {
           fd_match_id: effectiveMatch.id,
           status,
@@ -558,8 +585,8 @@ Deno.serve(async (req) => {
           fd_last_updated: effectiveMatch.lastUpdated,
           minute: effectiveMatch.minute,
           injury_time: effectiveMatch.injuryTime,
-          home_score: effectiveMatch.score.fullTime.home,
-          away_score: effectiveMatch.score.fullTime.away,
+          home_score: mainScore.home,
+          away_score: mainScore.away,
           updated_at: new Date().toISOString(),
         };
 
@@ -591,6 +618,7 @@ Deno.serve(async (req) => {
 
       const effectiveStatus = mapFdStatus(effectiveMatch.status);
       if (effectiveStatus === "finished" && encryptionKey) {
+        const mainScore = resolveMainScoreFromFd(effectiveMatch.score);
         const winner = mapFdWinner(effectiveMatch.score.winner) ??
           dbMatch.winner;
         const awarded = await awardPredictionPoints(
@@ -598,8 +626,8 @@ Deno.serve(async (req) => {
           dbMatch.id,
           {
             round_key: dbMatch.round_key,
-            home_score: effectiveMatch.score.fullTime.home,
-            away_score: effectiveMatch.score.fullTime.away,
+            home_score: mainScore.home,
+            away_score: mainScore.away,
             winner,
           },
           encryptionKey,

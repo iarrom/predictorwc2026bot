@@ -28,6 +28,11 @@ import {
   formatMatchKickoffDate,
   formatMatchTime,
 } from "@/shared/lib/formatDate";
+import {
+  formatMatchScore,
+  hasPenaltyShootout,
+  resolveDisplayScore,
+} from "@/shared/lib/formatMatchScore";
 import { MatchScoreDigit } from "@/shared/ui/MatchScoreDisplay";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +79,8 @@ function MatchDetailCenterFocus({
   live,
   homeScore,
   awayScore,
+  homePenalties,
+  awayPenalties,
   kickoffAt,
   homeTeamName,
   awayTeamName,
@@ -88,6 +95,8 @@ function MatchDetailCenterFocus({
   live: boolean;
   homeScore: number;
   awayScore: number;
+  homePenalties: number | null;
+  awayPenalties: number | null;
   kickoffAt: string;
   homeTeamName: string;
   awayTeamName: string;
@@ -128,20 +137,28 @@ function MatchDetailCenterFocus({
       )}
 
       {showScore && (
-        <div className="flex items-center justify-center gap-1.5">
-          <MatchScoreDigit
-            value={homeScore}
-            size={28}
-            className="text-white"
-          />
-          <span className="font-score text-[15px] leading-none text-white/50">
-            :
-          </span>
-          <MatchScoreDigit
-            value={awayScore}
-            size={28}
-            className="text-white"
-          />
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="flex items-center justify-center gap-1.5">
+            <MatchScoreDigit
+              value={homeScore}
+              size={28}
+              className="text-white"
+            />
+            <span className="font-score text-[15px] leading-none text-white/50">
+              :
+            </span>
+            <MatchScoreDigit
+              value={awayScore}
+              size={28}
+              className="text-white"
+            />
+          </div>
+          {hasPenaltyShootout({ home_penalties: homePenalties, away_penalties: awayPenalties }) && (
+            <p className="text-[11px] font-medium tabular-nums text-white/60">
+              {t("penaltiesShort")}{" "}
+              {formatMatchScore(homePenalties!, awayPenalties!)}
+            </p>
+          )}
         </div>
       )}
 
@@ -277,6 +294,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   const showScore = live || finished;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const predictionsRevealed = shouldRevealMatchPredictions(match);
+  const displayScore = resolveDisplayScore(match);
   const defaultMatchTab =
     live || finished ? "predictions" : "statistics";
   const showPredictionSection = !locked || (locked && !predictionsRevealed);
@@ -325,8 +343,10 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               locked={locked}
               showScore={showScore}
               live={live}
-              homeScore={match.home_score ?? 0}
-              awayScore={match.away_score ?? 0}
+              homeScore={displayScore.home}
+              awayScore={displayScore.away}
+              homePenalties={match.home_penalties}
+              awayPenalties={match.away_penalties}
               kickoffAt={match.kickoff_at}
               homeTeamName={match.home_team_name}
               awayTeamName={match.away_team_name}
@@ -369,8 +389,8 @@ export const MatchDetailContent = memo(function MatchDetailContent({
                     roundKey={match.round_key}
                     winner={match.winner}
                     live={live}
-                    homeScore={match.home_score ?? 0}
-                    awayScore={match.away_score ?? 0}
+                    homeScore={displayScore.home}
+                    awayScore={displayScore.away}
                     finished={finished}
                     outcomeMessages={outcomeMessages}
                     t={t}

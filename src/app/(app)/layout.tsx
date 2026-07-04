@@ -12,7 +12,7 @@ export default async function AppLayout({
 
   return (
     <BracketAppShell>
-      <div className="flex h-dvh flex-col overflow-hidden">
+      <div className="flex h-[var(--tg-viewport-height,100dvh)] flex-col overflow-hidden">
         <AppNav />
         <main className="mx-auto flex w-full max-w-md min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pt-2 pb-[calc(var(--app-bottom-chrome)+1rem+env(safe-area-inset-bottom,0px))]">
           {children}

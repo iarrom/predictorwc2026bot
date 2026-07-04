@@ -75,6 +75,7 @@
     "ptsPositive": "+{count} очк.",
     "live": "Live",
     "finished": "Завершён",
+    "penaltiesShort": "пен.",
     "liveNow": "Идут сейчас",
     "liveMinute": "Live {minute}",
     "groupStage": "Групповой этап",

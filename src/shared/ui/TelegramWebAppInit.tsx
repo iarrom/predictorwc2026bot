@@ -13,6 +13,20 @@ export function TelegramWebAppInit() {
     tg.ready();
     tg.expand();
     tg.disableVerticalSwipes?.();
+
+    const applyViewport = () => {
+      document.documentElement.style.setProperty(
+        "--tg-viewport-height",
+        `${tg.viewportStableHeight}px`,
+      );
+    };
+
+    applyViewport();
+    tg.onEvent("viewportChanged", applyViewport);
+
+    return () => {
+      tg.offEvent("viewportChanged", applyViewport);
+    };
   }, []);
 
   useEffect(() => {

@@ -8,6 +8,10 @@ import {
   isPlaceholderTeam,
   resolveTeamName,
 } from "../src/entities/match/lib/isPlaceholderTeam";
+import {
+  resolveKnockoutTeamPatches,
+  type KnockoutMatchForResolve,
+} from "../src/entities/match/lib/resolveKnockoutTeams";
 import { parseKickoff } from "../src/entities/match/lib/parseKickoff";
 import { parseRoundKey } from "../src/entities/match/lib/parseRoundKey";
 
@@ -54,6 +58,53 @@ async function upsertTeam(
   if (error) throw error;
   cache.set(name, data.id);
   return data.id;
+}
+
+async function resolveKnockoutPlaceholders(
+  supabase: ReturnType<typeof createClient>,
+  teamCache: Map<string, string>,
+): Promise<number> {
+  const { data: matches, error } = await supabase
+    .from("matches")
+    .select(
+      "id, match_number, status, winner, home_team_id, away_team_id, home_team_name, away_team_name",
+    );
+
+  if (error) throw error;
+
+  const patches = resolveKnockoutTeamPatches(
+    (matches ?? []) as KnockoutMatchForResolve[],
+  );
+
+  let resolved = 0;
+
+  for (const patch of patches) {
+    const updatePayload: Record<string, string | null> = {};
+
+    if (patch.home_team_name !== undefined) {
+      updatePayload.home_team_name = patch.home_team_name;
+      updatePayload.home_team_id =
+        patch.home_team_id ??
+        (await upsertTeam(supabase, patch.home_team_name, teamCache));
+    }
+
+    if (patch.away_team_name !== undefined) {
+      updatePayload.away_team_name = patch.away_team_name;
+      updatePayload.away_team_id =
+        patch.away_team_id ??
+        (await upsertTeam(supabase, patch.away_team_name, teamCache));
+    }
+
+    const { error: updateError } = await supabase
+      .from("matches")
+      .update(updatePayload)
+      .eq("id", patch.id);
+
+    if (updateError) throw updateError;
+    resolved++;
+  }
+
+  return resolved;
 }
 
 async function main() {
@@ -145,8 +196,10 @@ async function main() {
     }
   }
 
+  const resolved = await resolveKnockoutPlaceholders(supabase, teamCache);
+
   console.log(
-    `Imported schedule from OpenFootball: ${inserted} inserted, ${updated} updated.`,
+    `Imported schedule from OpenFootball: ${inserted} inserted, ${updated} updated, ${resolved} knockout placeholders resolved.`,
   );
 }
 

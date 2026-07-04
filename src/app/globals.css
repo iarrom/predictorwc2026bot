@@ -221,8 +221,9 @@
 
     .sports-panel-max-h {
         max-height: calc(
-            100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) -
-                var(--app-top-chrome) - var(--app-bottom-chrome)
+            var(--tg-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) -
+                env(safe-area-inset-bottom, 0px) - var(--app-top-chrome) -
+                var(--app-bottom-chrome)
         );
     }
 

@@ -6,7 +6,7 @@ import { buildGroupStandings } from "@/entities/match/lib/standings";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
-import { scorePrediction } from "@/entities/prediction/lib/scoring";
+import { scorePrediction, resolveScoredOutcome } from "@/entities/prediction/lib/scoring";
 import { formatMatchSubtitle } from "@/features/matches/lib/formatMatchSubtitle";
 import { buildPreviousMatchesByMatch } from "@/features/matches/lib/previousMatches";
 import type { MatchVoterInfo } from "@/features/matches/lib/voterInfo";
@@ -35,6 +35,11 @@ import {
 import { isMatchUpsetWatch } from "@/shared/lib/onside/upsets";
 import { livePredictionTextClass } from "@/features/matches/lib/livePredictionTone";
 import { MatchScoreDigit, MatchScoreStatus } from "@/shared/ui/MatchScoreDisplay";
+import {
+  formatMatchScore,
+  hasPenaltyShootout,
+  resolveDisplayScore,
+} from "@/shared/lib/formatMatchScore";
 import { createOutcomeMessages } from "@/shared/lib/i18n/outcome-messages";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import { cn } from "@/lib/utils";
@@ -70,6 +75,32 @@ function isLiveMatch(match: Match): boolean {
     match.home_score !== null &&
     match.away_score !== null
   );
+}
+
+function losingSideForMatchCard(
+  match: Match,
+  finished: boolean,
+  live: boolean,
+  displayScore: { home: number; away: number },
+): "home" | "away" | null {
+  if (finished) {
+    const outcome = resolveScoredOutcome({
+      round_key: match.round_key,
+      home_score: match.home_score,
+      away_score: match.away_score,
+      winner: match.winner,
+    });
+    if (outcome === "home") return "away";
+    if (outcome === "away") return "home";
+    return null;
+  }
+
+  if (live) {
+    if (displayScore.home > displayScore.away) return "away";
+    if (displayScore.away > displayScore.home) return "home";
+  }
+
+  return null;
 }
 
 function bucketForMatch(match: Match): MatchDayBucket {
@@ -266,6 +297,9 @@ function renderMatchCard({
       : null;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const showScore = live || finished;
+  const showPenalties = finished && hasPenaltyShootout(match);
+  const displayScore = resolveDisplayScore(match);
+  const losingSide = losingSideForMatchCard(match, finished, live, displayScore);
 
   return (
     <button
@@ -309,9 +343,12 @@ function renderMatchCard({
           />
           {showScore && (
             <MatchScoreDigit
-              value={match.home_score ?? 0}
+              value={displayScore.home}
               size={FLAG_SIZE}
-              className="ml-auto text-white"
+              className={cn(
+                "ml-auto text-white",
+                losingSide === "home" && "opacity-45",
+              )}
             />
           )}
         </div>
@@ -328,9 +365,20 @@ function renderMatchCard({
                 className="text-[11px] font-semibold text-red-300"
               />
             ) : finished ? (
-              <MatchScoreStatus className="text-[13px] text-foreground">
-                {t("finished")}
-              </MatchScoreStatus>
+              <div className="flex flex-col items-center gap-0.5">
+                <MatchScoreStatus className="text-[13px] text-foreground">
+                  {t("finished")}
+                </MatchScoreStatus>
+                {showPenalties && (
+                  <span className="text-[10px] font-medium tabular-nums text-muted-foreground">
+                    {t("penaltiesShort")}{" "}
+                    {formatMatchScore(
+                      match.home_penalties!,
+                      match.away_penalties!,
+                    )}
+                  </span>
+                )}
+              </div>
             ) : (
               <span className="text-[15px] font-semibold leading-none tabular-nums text-foreground">
                 {formatMatchTime(match.kickoff_at, locale)}
@@ -342,8 +390,8 @@ function renderMatchCard({
             locked={locked}
             live={live}
             finished={finished}
-            homeScore={match.home_score ?? 0}
-            awayScore={match.away_score ?? 0}
+            homeScore={displayScore.home}
+            awayScore={displayScore.away}
             homeTeamName={match.home_team_name}
             awayTeamName={match.away_team_name}
             points={points}
@@ -355,9 +403,12 @@ function renderMatchCard({
         <div className="flex min-w-0 items-start gap-1.5">
           {showScore && (
             <MatchScoreDigit
-              value={match.away_score ?? 0}
+              value={displayScore.away}
               size={FLAG_SIZE}
-              className="text-white"
+              className={cn(
+                "text-white",
+                losingSide === "away" && "opacity-45",
+              )}
             />
           )}
           <MatchCardTeamBlock

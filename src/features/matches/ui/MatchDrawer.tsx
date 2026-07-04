@@ -256,7 +256,7 @@ export function MatchDrawer({
     >
       <DrawerContent
         fullscreen
-        className="border-0 bg-transparent p-0 shadow-none before:hidden"
+        className="h-[var(--tg-viewport-height,100dvh)] max-h-[var(--tg-viewport-height,100dvh)] border-0 bg-transparent p-0 shadow-none before:hidden"
       >
         <DrawerTitle className="sr-only">Match details</DrawerTitle>
 

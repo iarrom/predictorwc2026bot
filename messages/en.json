@@ -75,6 +75,7 @@
     "ptsPositive": "+{count} pts",
     "live": "Live",
     "finished": "FT",
+    "penaltiesShort": "pen.",
     "liveNow": "Live now",
     "liveMinute": "Live {minute}",
     "groupStage": "Group Stage",

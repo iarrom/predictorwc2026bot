@@ -75,6 +75,7 @@
     "ptsPositive": "+{count} pkt",
     "live": "Live",
     "finished": "Koniec",
+    "penaltiesShort": "k.",
     "liveNow": "Na żywo",
     "liveMinute": "Live {minute}",
     "groupStage": "Faza grupowa",

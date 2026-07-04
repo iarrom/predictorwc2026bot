@@ -7,6 +7,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 
+export const dynamic = "force-dynamic";
+
 export default async function MatchesPage() {
   const bundle = await loadMatchesBundle();
 

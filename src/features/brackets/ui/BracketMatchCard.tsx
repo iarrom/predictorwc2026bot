@@ -10,6 +10,12 @@ import {
   formatMatchDateHeader,
   formatMatchTime,
 } from "@/shared/lib/formatDate";
+import {
+  formatMatchScore,
+  hasPenaltyShootout,
+  resolveDisplayScore,
+} from "@/shared/lib/formatMatchScore";
+import { resolveScoredOutcome } from "@/entities/prediction/lib/scoring";
 import { TeamFlag } from "@/shared/ui/TeamFlag";
 import type { Locale } from "@/shared/types/database";
 import { cn } from "@/lib/utils";
@@ -25,6 +31,8 @@ export interface BracketMatchView {
   awayTeamName: string;
   homeScore: number | null;
   awayScore: number | null;
+  homePenalties: number | null;
+  awayPenalties: number | null;
   status: Match["status"] | "scheduled";
   matchId: string | null;
 }
@@ -36,6 +44,8 @@ export function buildBracketMatchView(
   const template = getBracketTemplate(matchNumber);
 
   if (match) {
+    const displayScore = resolveDisplayScore(match);
+
     return {
       matchNumber,
       match,
@@ -43,8 +53,10 @@ export function buildBracketMatchView(
       roundKey: match.round_key,
       homeTeamName: match.home_team_name,
       awayTeamName: match.away_team_name,
-      homeScore: match.home_score,
-      awayScore: match.away_score,
+      homeScore: displayScore.home,
+      awayScore: displayScore.away,
+      homePenalties: match.home_penalties,
+      awayPenalties: match.away_penalties,
       status: match.status,
       matchId: match.id,
     };
@@ -59,9 +71,36 @@ export function buildBracketMatchView(
     awayTeamName: "TBD",
     homeScore: null,
     awayScore: null,
+    homePenalties: null,
+    awayPenalties: null,
     status: "scheduled",
     matchId: null,
   };
+}
+
+function losingSideForBracket(
+  view: BracketMatchView,
+  finished: boolean,
+  live: boolean,
+): "home" | "away" | null {
+  if (finished && view.match) {
+    const outcome = resolveScoredOutcome({
+      round_key: view.match.round_key,
+      home_score: view.match.home_score,
+      away_score: view.match.away_score,
+      winner: view.match.winner,
+    });
+    if (outcome === "home") return "away";
+    if (outcome === "away") return "home";
+    return null;
+  }
+
+  if (live && view.homeScore !== null && view.awayScore !== null) {
+    if (view.homeScore > view.awayScore) return "away";
+    if (view.awayScore > view.homeScore) return "home";
+  }
+
+  return null;
 }
 
 function BracketTeamRow({
@@ -70,12 +109,14 @@ function BracketTeamRow({
   showScore,
   tbdLabel,
   compact = false,
+  dimmed = false,
 }: {
   name: string;
   score: number | null;
   showScore: boolean;
   tbdLabel: string;
   compact?: boolean;
+  dimmed?: boolean;
 }) {
   const placeholder = isPlaceholderTeamName(name) || name === "TBD";
 
@@ -84,6 +125,7 @@ function BracketTeamRow({
       className={cn(
         "flex items-center gap-1.5",
         compact ? "px-2 py-1" : "gap-2 px-3 py-1.5",
+        dimmed && "opacity-45",
       )}
     >
       {placeholder ? (
@@ -149,6 +191,14 @@ export function BracketMatchCard({
     view.awayScore !== null;
   const showScore = finished || live;
   const interactive = Boolean(view.matchId && onSelect);
+  const showPenalties =
+    finished &&
+    hasPenaltyShootout({
+      home_penalties: view.homePenalties,
+      away_penalties: view.awayPenalties,
+    });
+
+  const losingSide = losingSideForBracket(view, finished, live);
 
   const headerLabel =
     title ??
@@ -178,6 +228,12 @@ export function BracketMatchCard({
           )}
         >
           {headerLabel}
+          {showPenalties && (
+            <span className="ml-1 tabular-nums text-white/45">
+              {tMatches("penaltiesShort")}{" "}
+              {formatMatchScore(view.homePenalties!, view.awayPenalties!)}
+            </span>
+          )}
           {live && (
             <span className="ml-1 font-semibold text-red-300">
               {tMatches("live")}
@@ -190,6 +246,7 @@ export function BracketMatchCard({
           showScore={showScore}
           tbdLabel={t("tbd")}
           compact={compact}
+          dimmed={losingSide === "home"}
         />
         <div className="border-t border-white/10" />
         <BracketTeamRow
@@ -198,6 +255,7 @@ export function BracketMatchCard({
           showScore={showScore}
           tbdLabel={t("tbd")}
           compact={compact}
+          dimmed={losingSide === "away"}
         />
       </button>
 
