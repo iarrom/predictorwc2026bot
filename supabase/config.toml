@@ -1,5 +1,4 @@
 # Supabase local development config
-# Org: Эйч | Project ref: dlwpiikzuwpvbvnjupmn
 
 [api]
 enabled = true

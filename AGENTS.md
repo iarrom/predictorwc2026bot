@@ -40,11 +40,9 @@ pnpm import:squads    # Wikipedia squads
 
 ## Supabase
 
-- Организация: **Эйч**
-- Project ref: `dlwpiikzuwpvbvnjupmn`
 - Миграции: `supabase/migrations/`
-- MCP: `.mcp.json` / `.cursor/mcp.json` → `https://mcp.supabase.com/mcp?project_ref=dlwpiikzuwpvbvnjupmn`
-- При OAuth-авторизации MCP вручную выбрать организацию **Эйч** (не личную org по email)
+- Ключи и project ref — только в `.env.local` (см. `.env.example`)
+- MCP: скопировать `.mcp.json.example` → `.mcp.json` (не коммитить)
 
 ## Документация
 

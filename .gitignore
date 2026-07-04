@@ -32,6 +32,10 @@ pnpm-debug.log*
 .env*
 !.env.example
 
+# MCP configs with project-specific refs (use .mcp.json.example)
+.mcp.json
+.cursor/mcp.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

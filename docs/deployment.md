@@ -2,11 +2,10 @@
 
 ## Supabase
 
-- **Организация:** Эйч
-- **Project ref:** `dlwpiikzuwpvbvnjupmn`
-- **URL:** `https://dlwpiikzuwpvbvnjupmn.supabase.co`
-- Применить миграции из `supabase/migrations/`
-- Включить Email auth (для programmatic sign-in)
+1. Создайте проект в [Supabase Dashboard](https://supabase.com/dashboard)
+2. Скопируйте **project ref** и URL из Project Settings → General
+3. Примените миграции из `supabase/migrations/`
+4. Включите Email auth (для programmatic sign-in)
 
 ## Vercel
 
@@ -21,9 +20,10 @@ SUPABASE_SERVICE_ROLE_KEY
 TELEGRAM_BOT_TOKEN
 TELEGRAM_AUTH_PEPPER
 MINI_APP_URL
+PREDICTIONS_ENCRYPTION_KEY
 ```
 
-4. Deploy → получить URL вида `https://predictorwc2026bot.vercel.app`
+4. Deploy → получить URL вида `https://your-app.vercel.app`
 
 ## Telegram BotFather
 
@@ -41,23 +41,25 @@ pnpm import:squads
 
 ## Edge Functions
 
+Замените `<project-ref>` на ref вашего проекта из Dashboard.
+
 ### sync-schedule
 
 Недеструктивное обновление расписания из OpenFootball: подставляет реальные команды в плей-офф по мере завершения раундов, не затирая `status` и счёт (pg_cron каждые 10 минут).
 
 ```bash
-supabase functions deploy sync-schedule --project-ref dlwpiikzuwpvbvnjupmn
+supabase functions deploy sync-schedule --project-ref <project-ref>
 ```
 
 Vault secret:
 
-- `sync_schedule_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/sync-schedule`
+- `sync_schedule_edge_url` = `https://<project-ref>.supabase.co/functions/v1/sync-schedule`
 - `cron_secret` — тот же, что у `sync-live-matches`
 
 Секрет edge function:
 
 ```bash
-supabase secrets set CRON_SECRET=... --project-ref dlwpiikzuwpvbvnjupmn
+supabase secrets set CRON_SECRET=... --project-ref <project-ref>
 ```
 
 Повторный ручной импорт (`pnpm import:schedule`) тоже безопасен во время турнира — не сбрасывает статус и счёт.
@@ -67,12 +69,12 @@ supabase secrets set CRON_SECRET=... --project-ref dlwpiikzuwpvbvnjupmn
 Синхронизация live-данных с football-data.org (pg_cron каждые 20 секунд).
 
 ```bash
-supabase functions deploy sync-live-matches --project-ref dlwpiikzuwpvbvnjupmn
+supabase functions deploy sync-live-matches --project-ref <project-ref>
 ```
 
 Vault secrets (Dashboard → Project Settings → Vault):
 
-- `sync_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/sync-live-matches`
+- `sync_edge_url` = `https://<project-ref>.supabase.co/functions/v1/sync-live-matches`
 - `cron_secret` = случайная строка (та же, что `CRON_SECRET` у функции)
 
 ### send-prediction-reminders
@@ -83,7 +85,7 @@ Telegram-напоминания за 6 часов до матча, если не
 2. Задеплоить функцию:
 
 ```bash
-supabase functions deploy send-prediction-reminders --project-ref dlwpiikzuwpvbvnjupmn
+supabase functions deploy send-prediction-reminders --project-ref <project-ref>
 ```
 
 3. Секреты edge functions:
@@ -92,27 +94,26 @@ supabase functions deploy send-prediction-reminders --project-ref dlwpiikzuwpvbv
 supabase secrets set \
   CRON_SECRET=... \
   TELEGRAM_BOT_TOKEN=... \
-  MINI_APP_URL=https://predictorwc2026bot.vercel.app \
-  --project-ref dlwpiikzuwpvbvnjupmn
+  MINI_APP_URL=https://your-app.vercel.app \
+  --project-ref <project-ref>
 ```
 
 4. Vault secret:
 
-- `reminders_edge_url` = `https://dlwpiikzuwpvbvnjupmn.supabase.co/functions/v1/send-prediction-reminders`
+- `reminders_edge_url` = `https://<project-ref>.supabase.co/functions/v1/send-prediction-reminders`
 - `cron_secret` — тот же, что у `sync-live-matches`
 
 `MINI_APP_URL` — production URL Mini App (без trailing slash). Используется в inline-кнопке `web_app` → `/matches`.
 
 ## MCP (Cursor)
 
-Файлы `.mcp.json` и `.cursor/mcp.json` подключают Supabase MCP, привязанный к проекту:
+Скопируйте `.mcp.json.example` → `.mcp.json` и подставьте свой project ref.
+Файлы `.mcp.json` и `.cursor/mcp.json` не коммитятся (см. `.gitignore`).
+
+URL формата:
 
 ```
-https://mcp.supabase.com/mcp?project_ref=dlwpiikzuwpvbvnjupmn
+https://mcp.supabase.com/mcp?project_ref=<project-ref>
 ```
 
-### Авторизация MCP
-
-При окне **Authorize Cursor** поле ORGANIZATION может быть предзаполнено личной org (`...@gmail.com's Org`). Это нормально — **откройте выпадающий список и выберите организацию «Эйч»** вручную, затем нажмите Authorize.
-
-Альтернатива: в [Supabase Dashboard](https://supabase.com/dashboard/project/dlwpiikzuwpvbvnjupmn) (организация Эйч) → Connect → MCP — скопировать готовый URL оттуда.
+Скопировать готовый URL можно в Supabase Dashboard → Connect → MCP.
