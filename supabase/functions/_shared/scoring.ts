@@ -43,8 +43,17 @@ export function resolveScoredOutcome(
     return null;
   }
 
-  if (isKnockoutRound(match.round_key) && match.winner) {
-    return match.winner;
+  if (isKnockoutRound(match.round_key)) {
+    if (match.winner) {
+      return match.winner;
+    }
+
+    const scoreOutcome = outcomeFromScore(match.home_score, match.away_score);
+
+    // A drawn knockout score means the advancing team is decided by a
+    // penalty shootout; until `winner` is synced the outcome is unknown
+    // (picking "draw" is impossible in knockout rounds).
+    return scoreOutcome === "draw" ? null : scoreOutcome;
   }
 
   return outcomeFromScore(match.home_score, match.away_score);

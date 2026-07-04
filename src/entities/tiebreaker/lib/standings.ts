@@ -112,12 +112,23 @@ function getRevealedRounds(
   ) as Record<TiebreakerRoundKey, boolean>;
 }
 
+function getCompletedRounds(
+  matches: MatchForStandings[],
+): Record<TiebreakerRoundKey, boolean> {
+  return Object.fromEntries(
+    TIEBREAKER_ROUND_KEYS.map((roundKey) => [
+      roundKey,
+      isRoundComplete(matches, roundKey),
+    ]),
+  ) as Record<TiebreakerRoundKey, boolean>;
+}
+
 function getWorstDeviationByRound({
-  revealedRounds,
+  completedRounds,
   actualGoalsByRound,
   decryptedRows,
 }: {
-  revealedRounds: Record<TiebreakerRoundKey, boolean>;
+  completedRounds: Record<TiebreakerRoundKey, boolean>;
   actualGoalsByRound: Record<TiebreakerRoundKey, number | null>;
   decryptedRows: DecryptedTiebreakerEntry[];
 }): Record<TiebreakerRoundKey, number> {
@@ -126,7 +137,7 @@ function getWorstDeviationByRound({
   ) as Record<TiebreakerRoundKey, number>;
 
   for (const roundKey of TIEBREAKER_ROUND_KEYS) {
-    if (!revealedRounds[roundKey]) {
+    if (!completedRounds[roundKey]) {
       continue;
     }
 
@@ -158,6 +169,7 @@ export function buildTiebreakerStandings({
   now?: Date;
 }): TiebreakerStandingsResult {
   const revealedRounds = getRevealedRounds(matches);
+  const completedRounds = getCompletedRounds(matches);
 
   const actualGoalsByRound = Object.fromEntries(
     TIEBREAKER_ROUND_KEYS.map((roundKey) => [
@@ -169,7 +181,7 @@ export function buildTiebreakerStandings({
   ) as Record<TiebreakerRoundKey, number | null>;
 
   const worstDeviationByRound = getWorstDeviationByRound({
-    revealedRounds,
+    completedRounds,
     actualGoalsByRound,
     decryptedRows,
   });
@@ -191,7 +203,10 @@ export function buildTiebreakerStandings({
     const userPredictions = predictionsByUser.get(profile.id);
     const perRound = Object.fromEntries(
       TIEBREAKER_ROUND_KEYS.map((roundKey) => {
-        if (!revealedRounds[roundKey]) {
+        // Deviation is only meaningful once every match of the round is
+        // finished; a partially played round would compare against a
+        // still-growing goal total.
+        if (!completedRounds[roundKey]) {
           return [roundKey, null];
         }
 

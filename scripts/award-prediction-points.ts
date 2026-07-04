@@ -4,7 +4,10 @@ config({ path: ".env.local" });
 config();
 
 import { createClient } from "@supabase/supabase-js";
-import { scorePrediction } from "../src/entities/prediction/lib/scoring";
+import {
+  resolveScoredOutcome,
+  scorePrediction,
+} from "../src/entities/prediction/lib/scoring";
 import { decryptOutcome } from "../src/shared/lib/predictions-crypto-core";
 import type { PredictionOutcome } from "../src/entities/prediction/model/types";
 
@@ -45,6 +48,16 @@ async function main() {
   let updated = 0;
 
   for (const match of matches) {
+    const resolvedOutcome = resolveScoredOutcome({
+      round_key: match.round_key,
+      home_score: match.home_score,
+      away_score: match.away_score,
+      winner: match.winner as PredictionOutcome | null,
+    });
+
+    // Knockout draw without a synced shootout winner: outcome unknown yet.
+    if (resolvedOutcome === null) continue;
+
     const { data: predictions, error: predictionsError } = await supabase
       .from("predictions")
       .select("id, user_id, match_id, outcome_encrypted")

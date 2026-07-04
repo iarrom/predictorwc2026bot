@@ -9,6 +9,7 @@ import {
 } from "@/shared/lib/auth";
 import { LEADERBOARD_EXCLUDED_TELEGRAM_IDS } from "@/shared/lib/leaderboard";
 import { decryptPredictionRows } from "@/shared/lib/predictions-crypto";
+import { fetchAllRows } from "@/shared/lib/supabase/fetchAll";
 import { createClient } from "@/shared/lib/supabase/server";
 
 export default async function LeaderboardPage() {
@@ -19,16 +20,20 @@ export default async function LeaderboardPage() {
 
   const [
     { data: matches },
-    { data: predictions },
+    predictions,
     { data: profiles },
     tiebreakerLeaderboard,
   ] = await Promise.all([
     supabase
       .from("matches")
       .select("id, round_key, status, home_score, away_score, winner"),
-    supabase
-      .from("predictions")
-      .select("match_id, user_id, outcome_encrypted"),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("predictions")
+        .select("match_id, user_id, outcome_encrypted")
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
     supabase
       .from("profiles")
       .select("id, display_name, photo_url, role, telegram_id")
@@ -45,7 +50,7 @@ export default async function LeaderboardPage() {
   );
 
   const decryptedRows = decryptPredictionRows(
-    (predictions ?? []).map((prediction) => ({
+    predictions.map((prediction) => ({
       user_id: prediction.user_id,
       match_id: prediction.match_id,
       outcome_encrypted: prediction.outcome_encrypted,

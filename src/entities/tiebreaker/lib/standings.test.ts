@@ -159,7 +159,7 @@ describe("buildTiebreakerStandings", () => {
     expect(standings.rows[0]?.overall).toBeNull();
   });
 
-  it("reveals playoff standings with partial actual goals", () => {
+  it("reveals playoff running goals without scoring deviation until complete", () => {
     const playoffMatches: MatchForStandings[] = [
       {
         round_key: "round_of_32",
@@ -185,11 +185,43 @@ describe("buildTiebreakerStandings", () => {
 
     expect(standings.revealedRounds.playoff).toBe(true);
     expect(standings.actualGoalsByRound.playoff).toBe(3);
-    expect(standings.rows[0]?.perRound.playoff).toEqual({
-      prediction: 50,
-      deviation: 47,
+    expect(standings.rows[0]?.perRound.playoff).toBeNull();
+    expect(standings.rows[0]?.overall).toBeNull();
+  });
+
+  it("scores playoff deviation once every playoff match is finished", () => {
+    const playoffMatches: MatchForStandings[] = [
+      {
+        round_key: "round_of_32",
+        kickoff_at: "2026-06-28T18:00:00.000Z",
+        status: "finished",
+        home_score: 2,
+        away_score: 1,
+      },
+      {
+        round_key: "final",
+        kickoff_at: "2026-07-19T18:00:00.000Z",
+        status: "finished",
+        home_score: 1,
+        away_score: 0,
+      },
+    ];
+
+    const standings = buildTiebreakerStandings({
+      matches: playoffMatches,
+      profiles,
+      decryptedRows: [{ user_id: "user-a", round_key: "playoff", goals: 50 }],
     });
-    expect(standings.rows[0]?.overall).toBe(47);
+
+    expect(standings.revealedRounds.playoff).toBe(true);
+    expect(standings.actualGoalsByRound.playoff).toBe(4);
+
+    const alice = standings.rows.find((row) => row.userId === "user-a");
+    expect(alice?.perRound.playoff).toEqual({
+      prediction: 50,
+      deviation: 46,
+    });
+    expect(alice?.overall).toBe(46);
   });
 
   it("penalizes missing predictions with worst deviation in the round", () => {

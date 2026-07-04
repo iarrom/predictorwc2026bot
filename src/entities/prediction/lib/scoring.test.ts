@@ -64,6 +64,20 @@ describe("scoring", () => {
     expect(scorePrediction("home", match)).toBe(5);
   });
 
+  it("leaves drawn knockout without winner unresolved (shootout pending)", () => {
+    const match = {
+      round_key: "round_of_32",
+      home_score: 1,
+      away_score: 1,
+      winner: null,
+    };
+
+    expect(resolveScoredOutcome(match)).toBeNull();
+    expect(scorePrediction("home", match)).toBe(0);
+    expect(scorePrediction("away", match)).toBe(0);
+    expect(scorePrediction("draw", match)).toBe(0);
+  });
+
   it("uses score for group matches even when winner is set", () => {
     const match = {
       round_key: "group_1",

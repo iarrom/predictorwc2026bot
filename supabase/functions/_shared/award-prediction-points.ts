@@ -2,6 +2,7 @@ import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 import { decryptOutcome } from "./predictions-crypto.ts";
 import {
   type MatchForScoring,
+  resolveScoredOutcome,
   scorePrediction,
 } from "./scoring.ts";
 
@@ -19,6 +20,13 @@ export async function awardPredictionPoints(
   encryptionKey: Uint8Array,
 ): Promise<number> {
   if (match.home_score === null || match.away_score === null) {
+    return 0;
+  }
+
+  // Knockout draws stay unresolved until the shootout winner is synced;
+  // writing points before that would briefly zero everyone out and then
+  // flip once the winner arrives.
+  if (resolveScoredOutcome(match) === null) {
     return 0;
   }
 

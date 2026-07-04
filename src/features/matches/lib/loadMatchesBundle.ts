@@ -18,6 +18,7 @@ import { LEADERBOARD_EXCLUDED_TELEGRAM_IDS } from "@/shared/lib/leaderboard";
 import { getUpsets } from "@/shared/lib/onside/client";
 import { buildUpsetMatchIds } from "@/shared/lib/onside/upsets";
 import { decryptPredictionRows } from "@/shared/lib/predictions-crypto";
+import { fetchAllRows } from "@/shared/lib/supabase/fetchAll";
 import { createClient } from "@/shared/lib/supabase/server";
 
 export interface MatchesBundle {
@@ -54,12 +55,12 @@ export async function loadMatchesBundle(): Promise<MatchesBundle> {
 
   const [
     { data: predictions },
-    { data: allPredictions },
+    allPredictions,
     { data: profiles },
     { data: excludedProfiles },
     { data: teams },
-    { data: players },
-    { data: matchEvents },
+    players,
+    matchEvents,
   ] = await Promise.all([
     userId
       ? supabase
@@ -67,30 +68,42 @@ export async function loadMatchesBundle(): Promise<MatchesBundle> {
           .select("match_id, round_key, outcome_encrypted, points_awarded")
           .eq("user_id", userId)
       : Promise.resolve({ data: [] }),
-    supabase
-      .from("predictions")
-      .select("match_id, user_id, outcome_encrypted, points_awarded"),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("predictions")
+        .select("match_id, user_id, outcome_encrypted, points_awarded")
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
     supabase.from("profiles").select("id, display_name, photo_url"),
     supabase
       .from("profiles")
       .select("id")
       .in("telegram_id", [...LEADERBOARD_EXCLUDED_TELEGRAM_IDS]),
     supabase.from("teams").select("name, primary_color"),
-    supabase
-      .from("players")
-      .select("team_id, shirt_number, photo_url")
-      .not("photo_url", "is", null),
-    supabase
-      .from("match_events")
-      .select("*")
-      .order("minute", { ascending: true }),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("players")
+        .select("team_id, shirt_number, photo_url")
+        .not("photo_url", "is", null)
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
+    fetchAllRows((from, to) =>
+      supabase
+        .from("match_events")
+        .select("*")
+        .order("minute", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    ),
   ]);
 
   const excludedUserIds = new Set(
     (excludedProfiles ?? []).map((profile) => profile.id),
   );
 
-  const publicPredictions = (allPredictions ?? []).filter(
+  const publicPredictions = allPredictions.filter(
     (prediction) => !excludedUserIds.has(prediction.user_id),
   );
 
@@ -160,7 +173,7 @@ export async function loadMatchesBundle(): Promise<MatchesBundle> {
   );
 
   const teamColors = buildTeamColorsMap(teams ?? []);
-  const playerPhotosByTeam = buildPlayerPhotosMap(players ?? []);
+  const playerPhotosByTeam = buildPlayerPhotosMap(players);
 
   const upsetsResponse = await getUpsets();
   const upsetMatchIds = buildUpsetMatchIds(
@@ -168,7 +181,7 @@ export async function loadMatchesBundle(): Promise<MatchesBundle> {
     upsetsResponse?.upsets ?? [],
   );
 
-  const eventsByMatch = (matchEvents ?? []).reduce<
+  const eventsByMatch = matchEvents.reduce<
     Record<string, MatchEvent[]>
   >((acc, event) => {
     const list = acc[event.match_id] ?? [];
