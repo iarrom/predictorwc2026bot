@@ -1,6 +1,12 @@
 {
   "name": "predictorwc2026bot",
   "version": "0.1.0",
+  "description": "Telegram Mini App для прогнозов на исходы матчей ЧМ-2026",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iarrom/predictorwc2026bot.git"
+  },
   "type": "module",
   "private": true,
   "scripts": {
@@ -37,6 +43,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
+    "exceljs": "^4.4.0",
     "heic2any": "^0.0.4",
     "next": "16.2.6",
     "next-intl": "^4.13.0",
