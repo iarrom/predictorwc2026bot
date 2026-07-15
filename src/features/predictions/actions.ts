@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import { z } from "zod";
 import { isKnockoutRound } from "@/entities/match/lib/isKnockoutRound";
+import { isPredictableRound } from "@/entities/match/lib/isPredictableRound";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentUserId, isParticipant } from "@/shared/lib/auth";
 import { encryptOutcome } from "@/shared/lib/predictions-crypto";
@@ -44,6 +45,9 @@ export async function savePrediction(
     .single();
 
   if (matchError || !match) return { error: t("matchNotFound") };
+  if (!isPredictableRound(match.round_key)) {
+    return { error: t("thirdPlaceNotPredictable") };
+  }
   if (isKnockoutRound(match.round_key) && outcome === "draw") {
     return { error: t("drawNotAllowedKnockout") };
   }

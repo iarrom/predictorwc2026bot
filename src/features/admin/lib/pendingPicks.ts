@@ -49,6 +49,7 @@ export async function getNextMatchPending(): Promise<{
     .from("matches")
     .select("*")
     .gt("kickoff_at", nowIso)
+    .neq("round_key", "third_place")
     .order("kickoff_at", { ascending: true })
     .limit(1)
     .maybeSingle();

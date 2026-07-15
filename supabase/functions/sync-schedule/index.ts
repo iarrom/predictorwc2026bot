@@ -22,6 +22,7 @@ interface OpenFootballData {
 interface DbMatchRow {
   id: string;
   external_key: string;
+  match_number: number | null;
   home_team_name: string;
   away_team_name: string;
 }
@@ -317,13 +318,21 @@ Deno.serve(async (req) => {
     const data = (await response.json()) as OpenFootballData;
     const { data: dbMatches, error: dbError } = await supabase
       .from("matches")
-      .select("id, external_key, home_team_name, away_team_name");
+      .select("id, external_key, match_number, home_team_name, away_team_name");
 
     if (dbError) throw dbError;
 
+    const rows = (dbMatches ?? []) as DbMatchRow[];
     const existingByKey = new Map<string, DbMatchRow>(
-      (dbMatches ?? []).map((row) => [row.external_key, row as DbMatchRow]),
+      rows.map((row) => [row.external_key, row]),
     );
+    const existingByNumber = new Map<number, DbMatchRow>();
+
+    for (const row of rows) {
+      if (row.match_number != null) {
+        existingByNumber.set(row.match_number, row);
+      }
+    }
 
     const teamCache = new Map<string, string>();
     let inserted = 0;
@@ -336,7 +345,9 @@ Deno.serve(async (req) => {
       const awayTeamName = match.team2;
       const roundKey = parseRoundKey(match.round);
       const kickoffAt = parseKickoff(match.date, match.time).toISOString();
-      const existing = existingByKey.get(externalKey);
+      const existing =
+        existingByKey.get(externalKey) ??
+        (match.num != null ? existingByNumber.get(match.num) : undefined);
 
       if (existing) {
         const resolvedHomeName = resolveTeamName(
@@ -359,6 +370,7 @@ Deno.serve(async (req) => {
         );
 
         const updatePayload = {
+          external_key: externalKey,
           round_key: roundKey,
           round_display: match.round,
           group_name: match.group ?? null,
@@ -382,6 +394,18 @@ Deno.serve(async (req) => {
           .eq("id", existing.id);
 
         if (updateError) throw updateError;
+
+        const updatedRow: DbMatchRow = {
+          ...existing,
+          external_key: externalKey,
+          match_number: match.num ?? existing.match_number,
+          home_team_name: resolvedHomeName,
+          away_team_name: resolvedAwayName,
+        };
+        existingByKey.set(externalKey, updatedRow);
+        if (updatedRow.match_number != null) {
+          existingByNumber.set(updatedRow.match_number, updatedRow);
+        }
 
         if (namesUnchanged) {
           unchanged++;

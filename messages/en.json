@@ -33,6 +33,7 @@
       "matchNotFound": "Match not found",
       "predictionsLocked": "Predictions are locked after kickoff",
       "drawNotAllowedKnockout": "In knockout matches you must pick the team that advances",
+      "thirdPlaceNotPredictable": "Third place match is not scored — predictions are not accepted",
       "tiebreakerRequiresApproval": "Tie-breaker picks are available after account approval",
       "invalidRound": "Invalid round",
       "goalsRange": "Goals must be an integer between 0 and {max}",

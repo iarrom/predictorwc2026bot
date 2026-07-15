@@ -1,4 +1,5 @@
 import type { Match, MatchEvent } from "@/entities/match/model/types";
+import { dedupeMatchesByNumber } from "@/entities/match/lib/dedupeMatchesByNumber";
 import { buildPlayerPhotosMap } from "@/features/matches/lib/playerPhotos";
 import type { PlayerPhotosByTeam } from "@/features/matches/lib/playerPhotos";
 import { buildPredictionsByMatch } from "@/features/matches/lib/predictionsByMatch";
@@ -46,7 +47,7 @@ export async function loadMatchesBundle(): Promise<MatchesBundle> {
     .select("*")
     .order("kickoff_at", { ascending: true });
 
-  const typedMatches = (matches ?? []) as Match[];
+  const typedMatches = dedupeMatchesByNumber((matches ?? []) as Match[]);
   const revealableMatchIds = new Set(
     typedMatches
       .filter((match) => shouldRevealMatchPredictions(match))

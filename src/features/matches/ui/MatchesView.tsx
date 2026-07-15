@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { buildGroupStandings } from "@/entities/match/lib/standings";
+import { isPredictableRound } from "@/entities/match/lib/isPredictableRound";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
@@ -280,6 +281,7 @@ function renderMatchCard({
   onOpen: (matchId: string) => void;
 }) {
   const locked = new Date(match.kickoff_at) <= new Date();
+  const predictable = isPredictableRound(match.round_key);
   const live = isLiveMatch(match);
   const finished =
     match.status === "finished" &&
@@ -315,7 +317,7 @@ function renderMatchCard({
     >
       <div className="mb-1.5 grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
         <div className="flex min-w-0 items-center justify-start">
-          {!finished && <MatchVoters voters={voters} compact />}
+          {!finished && predictable && <MatchVoters voters={voters} compact />}
         </div>
 
         <p className="truncate text-center text-[11px] leading-tight text-muted-foreground">
@@ -385,19 +387,21 @@ function renderMatchCard({
               </span>
             )}
           </div>
-          <MatchCardScoreMeta
-            prediction={prediction}
-            locked={locked}
-            live={live}
-            finished={finished}
-            homeScore={displayScore.home}
-            awayScore={displayScore.away}
-            homeTeamName={match.home_team_name}
-            awayTeamName={match.away_team_name}
-            points={points}
-            outcomeMessages={outcomeMessages}
-            t={t}
-          />
+          {predictable ? (
+            <MatchCardScoreMeta
+              prediction={prediction}
+              locked={locked}
+              live={live}
+              finished={finished}
+              homeScore={displayScore.home}
+              awayScore={displayScore.away}
+              homeTeamName={match.home_team_name}
+              awayTeamName={match.away_team_name}
+              points={points}
+              outcomeMessages={outcomeMessages}
+              t={t}
+            />
+          ) : null}
         </div>
 
         <div className="flex min-w-0 items-start gap-1.5">

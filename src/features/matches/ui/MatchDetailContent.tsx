@@ -3,6 +3,7 @@
 import { memo, useMemo } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import type { GroupStanding } from "@/entities/match/lib/standings";
+import { isPredictableRound } from "@/entities/match/lib/isPredictableRound";
 import type { Match, MatchEvent } from "@/entities/match/model/types";
 import { formatLiveMinute } from "@/entities/match/lib/formatLiveData";
 import { formatOutcomeWins } from "@/entities/prediction/lib/formatOutcome";
@@ -87,6 +88,7 @@ function MatchDetailCenterFocus({
   liveMinute,
   locale,
   outcomeMessages,
+  showPrediction,
   t,
 }: {
   prediction: PredictionDetail | undefined;
@@ -103,38 +105,41 @@ function MatchDetailCenterFocus({
   liveMinute: string | null;
   locale: Locale;
   outcomeMessages: ReturnType<typeof createOutcomeMessages>;
+  showPrediction: boolean;
   t: ReturnType<typeof useTranslations<"matches">>;
 }) {
   return (
     <div className="flex w-full min-w-0 flex-col items-center justify-center gap-1 self-center">
-      {prediction ? (
-        <p
-          className={cn(
-            "w-full truncate text-center text-lg font-bold leading-tight text-white",
-            livePredictionTextClass(
-              live,
+      {showPrediction ? (
+        prediction ? (
+          <p
+            className={cn(
+              "w-full truncate text-center text-lg font-bold leading-tight text-white",
+              livePredictionTextClass(
+                live,
+                prediction.outcome,
+                homeScore,
+                awayScore,
+              ),
+            )}
+          >
+            {formatOutcomeWins(
               prediction.outcome,
-              homeScore,
-              awayScore,
-            ),
-          )}
-        >
-          {formatOutcomeWins(
-            prediction.outcome,
-            homeTeamName,
-            awayTeamName,
-            outcomeMessages,
-          )}
-        </p>
-      ) : locked ? (
-        <p className="w-full text-center text-lg font-medium text-white/60">
-          {t("missed")}
-        </p>
-      ) : (
-        <p className="w-full text-center text-lg font-medium text-red-300">
-          {t("noPick")}
-        </p>
-      )}
+              homeTeamName,
+              awayTeamName,
+              outcomeMessages,
+            )}
+          </p>
+        ) : locked ? (
+          <p className="w-full text-center text-lg font-medium text-white/60">
+            {t("missed")}
+          </p>
+        ) : (
+          <p className="w-full text-center text-lg font-medium text-red-300">
+            {t("noPick")}
+          </p>
+        )
+      ) : null}
 
       {showScore && (
         <div className="flex flex-col items-center gap-0.5">
@@ -294,10 +299,15 @@ export const MatchDetailContent = memo(function MatchDetailContent({
   const showScore = live || finished;
   const liveMinute = formatLiveMinute(match.minute, match.injury_time);
   const predictionsRevealed = shouldRevealMatchPredictions(match);
+  const predictable = isPredictableRound(match.round_key);
   const displayScore = resolveDisplayScore(match);
-  const defaultMatchTab =
-    live || finished ? "predictions" : "statistics";
-  const showPredictionSection = !locked || (locked && !predictionsRevealed);
+  const defaultMatchTab = predictable
+    ? live || finished
+      ? "predictions"
+      : "statistics"
+    : "statistics";
+  const showPredictionSection =
+    predictable && (!locked || (locked && !predictionsRevealed));
 
   return (
     <div
@@ -353,6 +363,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               liveMinute={liveMinute}
               locale={locale}
               outcomeMessages={outcomeMessages}
+              showPrediction={predictable}
               t={t}
             />
 
@@ -369,7 +380,7 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               {match.venue ?? "\u00a0"}
             </p>
 
-            <MatchVoters voters={voters} />
+            {predictable ? <MatchVoters voters={voters} /> : null}
           </div>
         </section>
 
@@ -431,9 +442,11 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               }}
               className="flex h-auto w-full shrink-0 justify-start gap-4 bg-transparent p-0 group-data-horizontal/tabs:h-auto"
             >
-              <TabsTrigger value="predictions" className={matchTabClassName}>
-                {t("predictions")}
-              </TabsTrigger>
+              {predictable ? (
+                <TabsTrigger value="predictions" className={matchTabClassName}>
+                  {t("predictions")}
+                </TabsTrigger>
+              ) : null}
               <TabsTrigger value="statistics" className={matchTabClassName}>
                 {t("statistics")}
               </TabsTrigger>
@@ -445,20 +458,22 @@ export const MatchDetailContent = memo(function MatchDetailContent({
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="predictions" className="mt-0">
-              {predictionsRevealed ? (
-                <MatchPredictionsLeaderboard
-                  match={match}
-                  predictions={matchPredictions}
-                  currentUserId={currentUserId}
-                  canSeePlayerNames={canSeePlayerNames}
-                />
-              ) : (
-                <p className="text-sm text-white/50">
-                  {t("predictionsRevealAfter")}
-                </p>
-              )}
-            </TabsContent>
+            {predictable ? (
+              <TabsContent value="predictions" className="mt-0">
+                {predictionsRevealed ? (
+                  <MatchPredictionsLeaderboard
+                    match={match}
+                    predictions={matchPredictions}
+                    currentUserId={currentUserId}
+                    canSeePlayerNames={canSeePlayerNames}
+                  />
+                ) : (
+                  <p className="text-sm text-white/50">
+                    {t("predictionsRevealAfter")}
+                  </p>
+                )}
+              </TabsContent>
+            ) : null}
 
             <TabsContent value="statistics" className="mt-0">
               <MatchStatisticsTab

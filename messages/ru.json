@@ -33,6 +33,7 @@
       "matchNotFound": "Матч не найден",
       "predictionsLocked": "Прогнозы закрыты после начала матча",
       "drawNotAllowedKnockout": "В матчах плей-офф нужно выбрать команду, которая проходит дальше",
+      "thirdPlaceNotPredictable": "Матч за 3-е место не оценивается — прогнозы недоступны",
       "tiebreakerRequiresApproval": "Тай-брейк доступен после одобрения аккаунта",
       "invalidRound": "Некорректный раунд",
       "goalsRange": "Голы должны быть целым числом от 0 до {max}",

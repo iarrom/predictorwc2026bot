@@ -124,13 +124,27 @@ async function main() {
   const data = (await response.json()) as OpenFootballData;
   const { data: dbMatches, error: dbError } = await supabase
     .from("matches")
-    .select("id, external_key, home_team_name, away_team_name");
+    .select("id, external_key, match_number, home_team_name, away_team_name");
 
   if (dbError) throw dbError;
 
-  const existingByKey = new Map(
-    (dbMatches ?? []).map((row) => [row.external_key, row]),
-  );
+  type DbMatchRow = {
+    id: string;
+    external_key: string;
+    match_number: number | null;
+    home_team_name: string;
+    away_team_name: string;
+  };
+
+  const rows = (dbMatches ?? []) as DbMatchRow[];
+  const existingByKey = new Map(rows.map((row) => [row.external_key, row]));
+  const existingByNumber = new Map<number, DbMatchRow>();
+
+  for (const row of rows) {
+    if (row.match_number != null) {
+      existingByNumber.set(row.match_number, row);
+    }
+  }
 
   const teamCache = new Map<string, string>();
   let inserted = 0;
@@ -140,7 +154,9 @@ async function main() {
     const externalKey = externalKeyForMatch(match);
     const roundKey = parseRoundKey(match.round);
     const kickoffAt = parseKickoff(match.date, match.time).toISOString();
-    const existing = existingByKey.get(externalKey);
+    const existing =
+      existingByKey.get(externalKey) ??
+      (match.num != null ? existingByNumber.get(match.num) : undefined);
 
     if (existing) {
       const homeTeamName = resolveTeamName(
@@ -157,6 +173,7 @@ async function main() {
       const { error } = await supabase
         .from("matches")
         .update({
+          external_key: externalKey,
           round_key: roundKey,
           round_display: match.round,
           group_name: match.group ?? null,
@@ -171,6 +188,19 @@ async function main() {
         .eq("id", existing.id);
 
       if (error) throw error;
+
+      const updatedRow: DbMatchRow = {
+        ...existing,
+        external_key: externalKey,
+        match_number: match.num ?? existing.match_number,
+        home_team_name: homeTeamName,
+        away_team_name: awayTeamName,
+      };
+      existingByKey.set(externalKey, updatedRow);
+      if (updatedRow.match_number != null) {
+        existingByNumber.set(updatedRow.match_number, updatedRow);
+      }
+
       updated++;
     } else {
       const homeTeamId = await upsertTeam(supabase, match.team1, teamCache);

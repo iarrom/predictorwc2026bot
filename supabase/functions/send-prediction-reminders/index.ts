@@ -102,6 +102,7 @@ Deno.serve(async (req) => {
       .from("matches")
       .select("id, home_team_name, away_team_name, kickoff_at")
       .eq("status", "scheduled")
+      .neq("round_key", "third_place")
       .gt("kickoff_at", nowIso)
       .lte("kickoff_at", windowEndIso)
       .order("kickoff_at", { ascending: true });

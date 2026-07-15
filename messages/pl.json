@@ -33,6 +33,7 @@
       "matchNotFound": "Nie znaleziono meczu",
       "predictionsLocked": "Typy zamknięte po rozpoczęciu meczu",
       "drawNotAllowedKnockout": "W meczach pucharowych wybierz drużynę, która awansuje",
+      "thirdPlaceNotPredictable": "Mecz o 3. miejsce nie jest punktowany — typy są niedostępne",
       "tiebreakerRequiresApproval": "Dogrywka dostępna po zatwierdzeniu konta",
       "invalidRound": "Nieprawidłowa runda",
       "goalsRange": "Gole muszą być liczbą całkowitą od 0 do {max}",
